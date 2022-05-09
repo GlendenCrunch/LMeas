@@ -1,5 +1,13 @@
 #!/usr/bin/python3-32
 # -*- coding: utf-8 -*-
-import subprocess
+import sys
+from cx_Freeze import setup, Executable
 
-subprocess.call(r'python -m PyInstaller --onefile --icon=icon/icon.ico --console --name LMeas C:\ITL\LCARD\LMeas.py')
+sys.argv.append("build")
+setup(
+    name = "LMeas",
+    version = "2.0",
+    description = "LMeas",
+    author = "ITL",
+    executables = [Executable(script = "LMeas.py", icon="icon/icon.ico", base="Win32GUI")] #Win32GUI-выключает консоль
+)
