@@ -5,3 +5,7 @@
 + Методика поверки Е14: 4221-008-42885515 МП
 + Методика поверки Е-502: ДЛИЖ.411618.0080 МП
 + Калибратор: Fluke 5500A(5522A)
++ Interface:
+![alt text](https://github.com/GlendenCrunch/LMeas/blob/main/image/lc1.png)
+![alt text](https://github.com/GlendenCrunch/LMeas/blob/main/image/lc2.png)
+![alt text](https://github.com/GlendenCrunch/LMeas/blob/main/image/lc3.png)
