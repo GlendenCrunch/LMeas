@@ -123,7 +123,7 @@ class LMeasGUI():
 
         self.img1 = tk.PhotoImage(file='{}\\icon\\pan1.gif'.format(self.folder_1))
         self.img2 = tk.PhotoImage(file='{}\\icon\\check.gif'.format(self.folder_1))
-        with open('{}\\lib\\setting.json'.format(self.folder_1),'r') as file_json:
+        with open('{}\\libr\\setting.json'.format(self.folder_1),'r') as file_json:
             self.config_json = json.load(file_json)
 
         self.bg_colour = self.config_json['bg_colour']
@@ -449,7 +449,7 @@ class LMeasGUI():
             self.config_json['pastel_setting']["TNotebook.Tab"]["configure"]["background"] = self.config_json['bg_colour']
             self.config_json['pastel_setting']["TNotebook.Tab"]["map"]["background"] = [["selected",self.config_json['fg_colour']]]                
             
-            with open('{}\\lib\\setting.json'.format(self.folder_1), 'w', encoding='utf-8') as file_json:
+            with open('{}\\libr\\setting.json'.format(self.folder_1), 'w', encoding='utf-8') as file_json:
                 json.dump(self.config_json, file_json, ensure_ascii=False, indent=4, sort_keys=True)
             self.parent.destroy()
             try:
@@ -482,26 +482,40 @@ class LMeasGUI():
     def next(self):
         self.tab_control.select(self.tab2)
 
-    def pribor(self):
+    def visa_search(self):
         #self.rm = pyvisa.ResourceManager(visa_library='C:/Program Files/IVI Foundation/VISA/Win64/agvisa/agbin/visa32.dll')
         self.rm = pyvisa.ResourceManager()
         self.rm_tuple = self.rm.list_resources()
         self.rm_list = list(self.rm_tuple)
+        return self.rm_list
+
+    def decay_cycle(self, rm):
+        for j, item in enumerate(self.rg6):
+            if re.search(list(self.rg6.keys())[j], rm):
+                rm = list(self.rg6.values())[j]
+        return rm
+
+    def adres_cycle(self, combo_dmm, rm):
+        for j, item in enumerate(self.rg6):
+            if combo_dmm == list(self.rg6.values())[j]:
+                adres = list(filter(lambda rmt: list(self.rg6.keys())[j] in rmt, rm))
+                if len(adres) > 0:
+                    return adres
+        
+        if combo_dmm[:4] in ('ASRL', 'USB0', 'TCPI'):
+            return [combo_dmm]
+
+    def pribor(self):
         self.lb.delete(0, 'end')
         self.lb.insert('end', 'Обнаруженные приборы и порты:')
         self.lb.itemconfig('end', bg='light cyan')
-
-        for i, item_1 in enumerate(self.rm_list):
-            for j, item_2 in enumerate(self.rg6):
-                if re.search(list(self.rg6.keys())[j], self.rm_tuple[i]):
-                    self.rm_list[i] = list(self.rg6.values())[j]
-           
-            self.lb.insert('end', self.rm_list[i])
-        
-        self.combo_dmm.configure(values=self.rm_list)
-        self.combo_dmm.current(0)
-        self.combo_flu.configure(values=self.rm_list)
-        self.combo_flu.current(0)
+        self.visa_search()
+        decay_list = list(map(self.decay_cycle, self.rm_list))           
+        self.lb.insert('end', *decay_list)
+        self.combo_dmm.configure(values=decay_list)
+        #self.combo_dmm.current(0)
+        self.combo_flu.configure(values=decay_list)
+        #self.combo_flu.current(0)
         self.tree.delete(*self.tree.get_children())
 
     def connect_lcard(self):
@@ -511,9 +525,9 @@ class LMeasGUI():
             self.connect_lcard_e502()
 
     def connect_lcard_e14(self):
-        self.wl = ctypes.CDLL('lib\\wlcomp.dll')
+        self.wl = ctypes.CDLL('libr\\wlcomp.dll')
         #self.wl = ctypes.cdll.wlcomp
-        hDll = ctypes.pointer(ctypes.c_ulong(self.wl.LoadAPIDLL('lib\\lcomp.dll'.encode('ascii'))))
+        hDll = ctypes.pointer(ctypes.c_ulong(self.wl.LoadAPIDLL('libr\\lcomp.dll'.encode('ascii'))))
         hErr = ctypes.pointer(ctypes.c_ulong())
         self.hIfc = ctypes.pointer(ctypes.c_ulong(self.wl.CallCreateInstance(hDll, 0, hErr)))
         print ('hDll', hDll.contents.value)
@@ -523,7 +537,7 @@ class LMeasGUI():
         Open = ctypes.pointer(ctypes.c_ulonglong(self.wl.OpenLDevice(self.hIfc)))
         print ('Open', Open.contents.value)
 
-        Bios = ctypes.pointer(ctypes.c_ulong(self.wl.LoadBios(self.hIfc, 'lib\\E440')))
+        Bios = ctypes.pointer(ctypes.c_ulong(self.wl.LoadBios(self.hIfc, 'libr\\E440')))
         print ('Bios', Bios.contents.value)
 
         Test = ctypes.pointer(ctypes.c_ulong(self.wl.PlataTest(self.hIfc)))
@@ -583,8 +597,8 @@ class LMeasGUI():
     def connect_lcard_e502(self):
         pp = ctypes.pointer(Read_x502())
         pp2 = ctypes.pointer(t_x502_info())
-        self.lib = ctypes.cdll.LoadLibrary('lib\\e502api.dll')
-        self.lib2 = ctypes.cdll.LoadLibrary('lib\\x502api.dll')
+        self.lib = ctypes.cdll.LoadLibrary('libr\\e502api.dll')
+        self.lib2 = ctypes.cdll.LoadLibrary('libr\\x502api.dll')
         self.Create = self.lib2.X502_Create()
         Open = self.lib.E502_OpenUsb(self.Create, 0)
         self.lib2.X502_Close(self.Create)
@@ -623,8 +637,8 @@ class LMeasGUI():
         self.start_on.configure(state='normal')
         self.meas_on.configure(state='normal')
 
-    def connect_dmm(self):     
-        for i, item_1 in enumerate(self.rm_list):
+    def connect_dmm(self):
+        '''for i, item_1 in enumerate(self.rm_list):
             for j, item_2 in enumerate(self.rg6):
                 if self.combo_dmm.get() == list(self.rg6.values())[j]:
                     if re.search(list(self.rg6.keys())[j], self.rm_tuple[i]):
@@ -633,18 +647,26 @@ class LMeasGUI():
         if self.combo_dmm.get()[:4] in ('ASRL', 'USB0', 'TCPI'):
             self.inst_dmm = self.rm.open_resource(self.combo_dmm.get())
             self.inst_dmm.write('SYST:REM')
+            time.sleep(1)'''
+        
+        self.inst_dmm = self.rm.open_resource(self.adres_cycle(self.combo_dmm.get(), self.rm_list)[0])
+        if self.combo_dmm.get()[:4] in ('ASRL', 'USB0', 'TCPI'):
+            self.inst_dmm.write('SYST:REM')
             time.sleep(1)
             
         self.data_0 = self.inst_dmm.query("*IDN?")
         self.connect_pribor_set('Мультиметр', 'cyan')
     
     def connect_fluke_5500(self):
-        if self.combo_flu.get()[:4] == 'ASRL':
+        try:
             self.inst_fluke = self.rm.open_resource(self.combo_flu.get(), baud_rate=9600, data_bits=8, write_termination='\r', read_termination='\r')
             time.sleep(0.5)
-            self.data_0 = self.inst_fluke.query("*IDN?")
+            self.inst_fluke.write('*IDN?')
+            self.data_0 = my_gui.inst_fluke.read()
             self.connect_pribor_set('Калибратор', 'aquamarine')
-            #self.tab_control.select(self.tab2)
+        except:
+            self.lb.insert('end', 'Ошибка: Калибратор не определён')
+            self.lb.itemconfig('end', bg='red')
     
     def connect_pribor_set(self, name_pribor, color):
         self.b1 = self.data_0.split(',')
