@@ -9,11 +9,11 @@ import json
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
-from tkinter import ttk as ttk
+from tkinter import ttk
 from openpyexcel import load_workbook
-from openpyexcel.styles import Color, PatternFill, Font, Border
+from openpyexcel.styles import PatternFill
 import threading
-from threading import Thread, Event
+from threading import Thread
 import pyvisa
 import ctypes
 import csv
@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure, show
 import numpy as np
 import usb1
-from struct import pack, unpack
+from struct import pack
 
 sem = threading.Semaphore()
 
@@ -119,7 +119,7 @@ class LMeasGUI():
         self.kvar16.set(1)
         self.kvar17.set(0)
         self.kvar18.set(0)
-        self.kvar19.set(0)        
+        self.kvar19.set(0)
 
         self.img1 = tk.PhotoImage(file='{}\\icon\\pan1.gif'.format(self.folder_1))
         self.img2 = tk.PhotoImage(file='{}\\icon\\check.gif'.format(self.folder_1))
@@ -132,7 +132,7 @@ class LMeasGUI():
         self.pastel_setting = self.config_json["pastel_setting"]
         self.style = ttk.Style()
         self.style.theme_create('pastel', settings=self.pastel_setting)
-        
+
         self.style.theme_use('pastel')
 
         parent.title('LMeas')
