@@ -1,5 +1,5 @@
 ### LMeas - программа поверки/калибровки L-CARD E14-440(D), E-502
-+ Python 3.8.2
++ Python 3.8.6 32-bit
 + pip install: pyvisa, libusb1, openpyexcel, matplotlib, numpy
 + Драйверы: NI-VISA full
 + Методика поверки Е14: 4221-008-42885515 МП
