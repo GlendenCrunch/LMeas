@@ -1,0 +1,44 @@
+{
+    "5522A": {
+        "OFF": "STBY",
+        "ON": "OPER",
+        "aci": "OUT ",
+        "acv": "OUT ",
+        "ac0": "OUT ",
+        "dci": "OUT ",
+        "dcv": "OUT ",
+        "fr": "OUT ",
+        "res": "OUT ",
+        "res4": "; ZCOMP WIRE4"
+    },
+    "N4-56": {
+        "OFF": "OUTP:STAT OFF",
+        "ON": "OUTP:STAT ON",
+        "aci": "CONF:CURR:AC ",
+        "acv": "CONF:VOLT:AC ",
+        "ac0": "CONF:VOLT:AC ",
+        "dci": "CONF:CURR ",
+        "dcv": "CONF:VOLT ",
+        "fr": "CONF:VOLT:AC ",
+        "res": "CONF:RES ",
+        "res4": ""
+    },
+    "language": "Russia",
+    "sign_pribor": {
+        "0090": "CNT-90XL",
+        "0101": "34465A",
+        "0368": "TDS 2014B",
+        "03A4": "TDS 2014C",
+        "0A07": "34411A",
+        "0DAD": "V7-78/1",
+        "1301": "34461A",
+        "1401": "34461A",
+        "1770": "MSO-X 3104T",
+        "17A4": "MSO-X 3034A",
+        "1A07": "34461A",
+        "1F01": "N5183A",
+        "5418": "N1913A",
+        "5707": "33622A"
+    },
+    "theme": "Dark"
+}

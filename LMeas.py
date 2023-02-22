@@ -6,31 +6,33 @@ import time
 from datetime import datetime
 import array
 import json
+import ctypes
+from struct import pack
+import csv
+import math
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
 from tkinter import ttk
-from openpyexcel import load_workbook
-from openpyexcel.styles import PatternFill
 import threading
 from threading import Thread
+from openpyexcel import load_workbook
+from openpyexcel.styles import PatternFill
 import pyvisa
-import ctypes
-import csv
-import math
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure, show
 import numpy as np
 import usb1
-from struct import pack
 
 sem = threading.Semaphore()
+COUNT = 1
 
 Size = ctypes.pointer(ctypes.c_ulong(1000000))
 Data = ctypes.pointer(ctypes.c_ushort())
 Sync = ctypes.pointer(ctypes.c_ulong())
 
 class LMeasGUI():
+    """class GUI"""
     def __init__(self, parent):
         self.parent = parent
         self.folder_1 = os.getcwd()
@@ -41,136 +43,76 @@ class LMeasGUI():
         self.rg4_e502 = ['0', '1', '9', '99', '199']     # 2MHz / dRate + 1
         self.rg5 = {'10.0': '0000', '2.5': '0100', '0.625': '1000', '0.1562': '1100'}
         self.rg5_e502 = {'10.0': '0', '5': '1', '2': '2', '1': '3', '0.5': '4', '0.2': '5'}
-        self.rg6 = {'0A07': '34411A', '1301': '34461A', '1401': '34461A', '0101': '34465A', '0DAD':'V7-78/1',
-                    '1F01': 'N5183A', '5707': '33622A', '5418': 'N1913A', '0090': 'CNT-90XL', '0368': 'TDS 2014B'}
 
-        self.name_protokol = tk.StringVar()
-        self.temp = tk.StringVar()
-        self.humi = tk.StringVar()
-        self.press = tk.StringVar()
-        self.custom = tk.StringVar()
-        self.pover = tk.StringVar()
-        self.dac1 = tk.StringVar()
-        self.dac2 = tk.StringVar()
-        self.freq = tk.StringVar()
-        self.adc0 = tk.StringVar()
-        self.adc1 = tk.StringVar()
-        self.adc2 = tk.StringVar()
-        self.adc3 = tk.StringVar()
-        self.adc4 = tk.StringVar()
-        self.adc5 = tk.StringVar()
-        self.adc6 = tk.StringVar()
-        self.adc7 = tk.StringVar()
-        self.adc8 = tk.StringVar()
-        self.adc9 = tk.StringVar()
-        self.adc10 = tk.StringVar()
-        self.adc11 = tk.StringVar()
-        self.adc12 = tk.StringVar()
-        self.adc13 = tk.StringVar()
-        self.adc14 = tk.StringVar()
-        self.adc15 = tk.StringVar()
-        self.cvar1 = tk.BooleanVar()
-        self.cvar2 = tk.BooleanVar()
-        self.cvar3 = tk.BooleanVar()
-        self.cvar4 = tk.BooleanVar()
-        self.cvar5 = tk.BooleanVar()
-        self.cvar6 = tk.BooleanVar()
-        self.kvar1 = tk.BooleanVar()
-        self.kvar2 = tk.BooleanVar()
-        self.kvar3 = tk.BooleanVar()
-        self.kvar4 = tk.BooleanVar()
-        self.kvar5 = tk.BooleanVar()
-        self.kvar6 = tk.BooleanVar()
-        self.kvar7 = tk.BooleanVar()
-        self.kvar8 = tk.BooleanVar()
-        self.kvar9 = tk.BooleanVar()
-        self.kvar10 = tk.BooleanVar()
-        self.kvar11 = tk.BooleanVar()
-        self.kvar12 = tk.BooleanVar()
-        self.kvar13 = tk.BooleanVar()
-        self.kvar14 = tk.BooleanVar()
-        self.kvar15 = tk.BooleanVar()
-        self.kvar16 = tk.BooleanVar()
-        self.kvar17 = tk.BooleanVar()
-        self.kvar18 = tk.BooleanVar()
-        self.kvar19 = tk.BooleanVar()
+        self.varlist_str = ['name_protokol','temp','humi','press','custom','pover','dac1','dac2','freq','adc0',
+        'adc1','adc2','adc3','adc4','adc5','adc6','adc7','adc8','adc9','adc10','adc11','adc12','adc13','adc14','adc15']
+        self.vardict_str = {self.var: tk.StringVar() for self.var in self.varlist_str}
 
-        self.cvar1.set(1)
-        self.cvar2.set(1)
-        self.cvar3.set(1)
-        self.cvar4.set(1)
-        self.cvar5.set(1)
-        self.cvar6.set(1)
-        self.kvar1.set(1)
-        self.kvar2.set(1)
-        self.kvar3.set(1)
-        self.kvar4.set(1)
-        self.kvar5.set(1)
-        self.kvar6.set(1)
-        self.kvar7.set(1)
-        self.kvar8.set(1)
-        self.kvar9.set(1)
-        self.kvar10.set(1)
-        self.kvar11.set(1)
-        self.kvar12.set(1)
-        self.kvar13.set(1)
-        self.kvar14.set(1)
-        self.kvar15.set(1)
-        self.kvar16.set(1)
-        self.kvar17.set(0)
-        self.kvar18.set(0)
-        self.kvar19.set(0)
+        self.varlist_boo = ['cvar1','cvar2','cvar3','cvar4','cvar5','cvar6','kvar1','kvar2','kvar3','kvar4','kvar5','kvar6',
+        'kvar7','kvar8','kvar9','kvar10','kvar11','kvar12','kvar13','kvar14','kvar15','kvar16','kvar17','kvar18','kvar19']
+        self.vardict_boo = {self.var: tk.BooleanVar() for self.var in self.varlist_boo}
+        for self.var in self.varlist_boo[:22]:
+            self.vardict_boo[self.var].set(1)
 
-        self.img1 = tk.PhotoImage(file='{}\\icon\\pan1.gif'.format(self.folder_1))
-        self.img2 = tk.PhotoImage(file='{}\\icon\\check.gif'.format(self.folder_1))
-        with open('{}\\libr\\setting.json'.format(self.folder_1),'r') as file_json:
-            self.config_json = json.load(file_json)
+        self.ar10b = ('arial', 10, 'bold')
+        self.ar12b = ('arial', 12, 'bold')
+        self.img1 = tk.PhotoImage(file=f'{self.folder_1}\\icon\\pan1.gif')
+        self.img2 = tk.PhotoImage(file=f'{self.folder_1}\\icon\\check.gif')
+        self.img3 = tk.PhotoImage(file=f'{self.folder_1}\\icon\\error.png')
+        self.img4 = tk.PhotoImage(file=f'{self.folder_1}\\icon\\refresh.png')
 
-        self.bg_colour = self.config_json['bg_colour']
-        self.fg_colour = self.config_json['fg_colour']
-        self.bg_button = self.config_json['bg_button']
-        self.pastel_setting = self.config_json["pastel_setting"]
+        with open(f'{self.folder_1}\\setting.json','r', encoding='utf-8') as file_json:
+            self.sett_json = json.load(file_json)
+        with open(f'{self.folder_1}\\theme.json','r', encoding='utf-8') as file_json:
+            self.theme_json = json.load(file_json)
+
+        self.theme = self.theme_json[self.sett_json['theme']]
+        self.sign_pribor = self.sett_json['sign_pribor']
+
+        self.bg_colour = self.theme['.']['bg_colour']
+        self.fg_colour = self.theme['.']['fg_colour']
+        self.bg_button = self.theme['.']['bg_button']
+
         self.style = ttk.Style()
-        self.style.theme_create('pastel', settings=self.pastel_setting)
-
-        self.style.theme_use('pastel')
+        self.style.theme_create('theme', settings=self.theme)
+        self.style.theme_use('theme')
 
         parent.title('LMeas')
         parent.geometry('1000x490')
-        parent.iconbitmap('{}\\icon\\icon.ico'.format(self.folder_1))
+        parent.iconbitmap(f'{self.folder_1}\\icon\\icon.ico')
         parent.resizable(width=False, height=False)
 
         main_menu = tk.Menu(parent)
         parent.config(menu=main_menu)
-        file_menu = tk.Menu(main_menu, tearoff=False)
-        file_menu.add_separator()
-        file_menu.add_command(label='Закрыть', command=parent.destroy)
+        fmenu = tk.Menu(main_menu, tearoff=False)
+        fmenu.add_separator()
+        fmenu.add_command(label='Закрыть', command=parent.destroy)
 
-        file_setting = tk.Menu(main_menu, tearoff=False)
-        file_setting.add_command(label='Калибровка/Поверка', command=self.setting_win)
-        file_setting.add_command(label='Основные', command=self.set_style_win)
+        fsetting = tk.Menu(main_menu, tearoff=False)
+        fsetting.add_command(label='Калибровка/Поверка', command=self.setting_win)
+        fsetting.add_command(label='Стили', command=self.set_style_win)
 
-        main_menu.add_cascade(label='Файл', menu=file_menu)
+        main_menu.add_cascade(label='Файл', menu=fmenu)
         main_menu.add_cascade(label='Протокол', command=self.protokol)
-        main_menu.add_cascade(label='Настройки', menu=file_setting)
+        main_menu.add_cascade(label='Настройки', menu=fsetting)
         main_menu.add_cascade(label='О программе', command=self.about_win)
 
-        rightFrame = tk.Frame(parent)
-        tabFrame = tk.Frame(parent)
-        statusFrame = tk.Frame(parent)
+        self.tabframe = tk.Frame(parent)
+        self.rightframe = tk.Frame(parent)
+        self.statusframe = tk.Frame(parent)
 
-        tabFrame.grid(row=0, column=0, ipadx = 143, ipady = 210, sticky="nsew")
-        rightFrame.grid(row=0, column=1, sticky="ns")
-        statusFrame.grid(row=1, column=0, columnspan=2, sticky="ew")
+        self.tabframe.grid(row=0, column=0, ipadx = 110, ipady = 210, sticky="nsew")
+        self.rightframe.grid(row=0, column=1, sticky="ns")
+        self.statusframe.grid(row=1, column=0, columnspan=2, sticky="ew")
 
-        self.sb = tk.Scrollbar(rightFrame, orient='vertical')
-        self.lb = tk.Listbox(rightFrame, selectmode='extended', width=39, height=20, relief='ridge')
+        self.sb = tk.Scrollbar(self.rightframe, orient='vertical')
+        self.lb = tk.Listbox(self.rightframe, selectmode='extended', width=39, height=20, relief='ridge')
         self.sb['command'] = self.lb.yview
         self.lb['yscroll'] = self.sb.set
         self.sb.pack(side='right', fill='y')
         self.lb.pack(side='right', fill='y')
 
-        self.tab_control = ttk.Notebook(tabFrame)
+        self.tab_control = ttk.Notebook(self.tabframe)
         self.tab1 = ttk.Frame(self.tab_control)
         self.tab2 = ttk.Frame(self.tab_control)
         self.tab3 = ttk.Frame(self.tab_control)
@@ -179,9 +121,9 @@ class LMeasGUI():
         self.tab_control.add(self.tab3, text="Сбор данных")
         self.tab_control.pack(expand=1, fill='both')
 
-        self.statusbar = tk.Label(statusFrame, text="Статус: ожидание...", background="gray80", anchor='w')
+        self.statusbar = tk.Label(self.statusframe, text="Статус: ожидание...", background="gray80", anchor='w')
         self.statusbar.pack(side='left', fill='x', expand=True)
-        self.statusbar_1 = tk.Label(statusFrame, text="I T L ©", background="gray80", anchor='e')
+        self.statusbar_1 = tk.Label(self.statusframe, text="I T L ©", background="gray80", anchor='e')
         self.statusbar_1.pack(side='right', fill='x')
 
         self.tree = ttk.Treeview(self.tab1, columns=['1', '2', '3', '4'], height=5)
@@ -195,52 +137,50 @@ class LMeasGUI():
         self.tree.column('2', stretch=False, anchor='center', minwidth=100, width=100)
         self.tree.column('3', stretch=False, anchor='center', minwidth=120, width=120)
         self.tree.column('4', stretch=False, anchor='center', minwidth=360, width=360)
-        self.tree.place(x=5, y=220)
+        self.tree.place(x=5, y=290)
 
-        self.lbf1 = tk.LabelFrame(self.tab1, text='LCARD', width=200, height=200, fg=self.fg_colour, bg=self.bg_colour, font=("Arial", 10, 'bold'))
+        self.lbf1 = tk.LabelFrame(self.tab1, text='LCARD', width=200, height=200, fg=self.fg_colour, bg=self.bg_colour, font=self.ar10b)
         self.lbf1.place(x=5, y=5)
-        self.lbf2 = tk.LabelFrame(self.tab1, text='Калибратор', width=200, height=200, fg=self.fg_colour, bg=self.bg_colour, font=("Arial", 10, 'bold'))
+        self.lbf2 = tk.LabelFrame(self.tab1, text='Калибратор', width=200, height=200, fg=self.fg_colour, bg=self.bg_colour, font=self.ar10b)
         self.lbf2.place(x=205, y=5)
-        self.lbf3 = tk.LabelFrame(self.tab1, text='Мультиметр', width=200, height=200, fg=self.fg_colour, bg=self.bg_colour, font=("Arial", 10, 'bold'))
+        self.lbf3 = tk.LabelFrame(self.tab1, text='Мультиметр', width=200, height=200, fg=self.fg_colour, bg=self.bg_colour, font=self.ar10b)
         self.lbf3.place(x=405, y=5)
-        self.lbf4 = tk.LabelFrame(self.tab2, text='Параметры поверки', width=200, height=390, fg=self.fg_colour, bg=self.bg_colour, font=("Arial", 10, 'bold'))
+        self.lbf4 = tk.LabelFrame(self.tab2, text='Параметры поверки', width=200, height=390, fg=self.fg_colour, bg=self.bg_colour, font=self.ar10b)
         self.lbf4.place(x=5, y=5)
-        self.lbf5 = tk.LabelFrame(self.tab3, text='АЦП', width=350, height=165, fg=self.fg_colour, bg=self.bg_colour, font=("Arial", 10, 'bold'))
+        self.lbf5 = tk.LabelFrame(self.tab3, text='АЦП', width=350, height=165, fg=self.fg_colour, bg=self.bg_colour, font=self.ar10b)
         self.lbf5.place(x=5, y=45)
-        self.lbf6 = tk.LabelFrame(self.tab3, text='ЦАП, мВ', width=350, height=180, fg=self.fg_colour, bg=self.bg_colour, font=("Arial", 10, 'bold'))
+        self.lbf6 = tk.LabelFrame(self.tab3, text='ЦАП, мВ', width=350, height=180, fg=self.fg_colour, bg=self.bg_colour, font=self.ar10b)
         self.lbf6.place(x=5, y=220)
-        self.lbf7 = tk.LabelFrame(self.tab3, text='Каналы АЦП, мВ', width=170, height=385, fg=self.fg_colour, bg=self.bg_colour, font=("Arial", 10, 'bold'))
-        self.lbf7.place(x=370, y=5)
-        self.lbf8 = tk.LabelFrame(self.tab3, text='График, U(t)', width=155, height=180, fg=self.fg_colour, bg=self.bg_colour, font=("Arial", 10, 'bold'))
-        self.lbf8.place(x=545, y=5)
+        self.lbf7 = tk.LabelFrame(self.tab3, text='Каналы АЦП, мВ', width=200, height=385, fg=self.fg_colour, bg=self.bg_colour, font=self.ar10b)
+        self.lbf7.place(x=370, y=0)
+        self.lbf8 = tk.LabelFrame(self.tab3, text='График, U(t)', width=155, height=180, fg=self.fg_colour, bg=self.bg_colour, font=self.ar10b)
+        self.lbf8.place(x=545, y=0)
 
         self.canvas_1 = tk.Canvas(self.lbf5, width=35, height=35, bg=self.bg_colour, highlightthickness=1, highlightbackground=self.bg_colour)
         self.canvas_1.place(x=250, y=50)
         self.oval_1 = self.canvas_1.create_oval(10, 10, 30, 30, fill="white")
-            
-        self.lc_on = tk.Button(self.lbf1, text='Подключить', width=12, fg='#fff', bg=self.bg_button, font=("Arial", 12, 'bold'), command=self.connect_lcard)
+
+        self.lc_on = tk.Button(self.lbf1, text='Подключить', width=12, fg='#fff', bg=self.bg_button, font=self.ar12b, command=self.connect_lcard)
         self.lc_on.place(x=35, y=80)
-        self.lc_off = tk.Button(self.lbf1, text='Отключить', state='disabled', width=12, fg='#fff', bg=self.bg_button, font=("Arial", 12, 'bold'), command=self.close_lc)
+        self.lc_off = tk.Button(self.lbf1, text='Отключить', state='disabled', width=12, fg='#fff', bg=self.bg_button, font=self.ar12b, command=self.close_lc)
         self.lc_off.place(x=35, y=130)
-        self.fluk_on = tk.Button(self.lbf2, text='Подключить', width=12, fg='#fff', bg=self.bg_button, font=("Arial", 12, 'bold'), command=self.connect_fluke_5500)
+        self.fluk_on = tk.Button(self.lbf2, text='Подключить', width=12, fg='#fff', bg=self.bg_button, font=self.ar12b, command=self.connect_fluke_5500)
         self.fluk_on.place(x=35, y=130)
-        self.dmm_on = tk.Button(self.lbf3, text='Подключить', state='disabled', width=12, fg='#fff', bg=self.bg_button, font=("Arial", 12, 'bold'), command=self.connect_dmm)
+        self.dmm_on = tk.Button(self.lbf3, text='Подключить', state='disabled', width=12, fg='#fff', bg=self.bg_button, font=self.ar12b, command=self.connect_dmm)
         self.dmm_on.place(x=35, y=130)
-        self.next = tk.Button(self.tab1, text='>>> Далее >>>', width=12, fg='#fff', bg=self.bg_button, font=("Arial", 12, 'bold'), command=self.next)
-        self.next.place(x=300, y=375)
-        self.fresh = tk.Button(self.tab1, text='☼ Обновить', width=12, fg='#fff', bg=self.bg_button, font=("Arial", 12, 'bold'), command=self.pribor)
-        self.fresh.place(x=610, y=375)
-        self.start_on = tk.Button(self.tab2, text='► Старт', state='disabled', width=12, fg='#fff', bg=self.bg_button, font=("Arial", 12, 'bold'), command=self.start)
+        self.fresh = tk.Button(self.tab1, image=self.img4, fg='#fff', bg=self.bg_button, command=self.pribor)
+        self.fresh.place(x=690, y=240)
+        self.start_on = tk.Button(self.tab2, text='► Старт', state='disabled', width=12, fg='#fff', bg=self.bg_button, font=self.ar12b, command=self.start)
         self.start_on.place(x=210, y=20)
-        self.paus_on = tk.Button(self.tab2, text='▌▌ Пауза', state='disabled', width=12, fg='#fff', bg=self.bg_button, font=("Arial", 12, 'bold'))
+        self.paus_on = tk.Button(self.tab2, text='▌▌ Пауза', state='disabled', width=12, fg='#fff', bg=self.bg_button, font=self.ar12b)
         self.paus_on.place(x=350, y=20)
-        self.meas_on = tk.Button(self.lbf5, text='Измерить', state='disabled', width=12, fg='#fff', bg=self.bg_button, font=("Arial", 12, 'bold'), command=self.measure_adc)
+        self.meas_on = tk.Button(self.lbf5, text='Измерить', state='disabled', width=12, fg='#fff', bg=self.bg_button, font=self.ar12b, command=self.measure_adc)
         self.meas_on.place(x=10,y=105)
-        self.set_dac = tk.Button(self.lbf6, text='Задать', state='disabled', width=12, fg='#fff', bg=self.bg_button, font=("Arial", 12, 'bold'), command=self.measure_dac)
+        self.set_dac = tk.Button(self.lbf6, text='Задать', state='disabled', width=12, fg='#fff', bg=self.bg_button, font=self.ar12b, command=self.measure_dac)
         self.set_dac.place(x=10,y=120)
-        self.draw_on = tk.Button(self.lbf8, text='Построить', state='disabled', width=13, fg='#fff', bg=self.bg_button, font=("Arial", 12, 'bold'), command=graphic_adc)
+        self.draw_on = tk.Button(self.lbf8, text='Построить', state='disabled', width=13, fg='#fff', bg=self.bg_button, font=self.ar12b, command=self.graphic_adc)
         self.draw_on.place(x=5,y=70)
-        self.draw_csv_on = tk.Button(self.lbf8, text='Построить CSV', width=13, fg='#fff', bg=self.bg_button, font=("Arial", 12, 'bold'), command=graphic_adc_csv)
+        self.draw_csv_on = tk.Button(self.lbf8, text='Построить CSV', width=13, fg='#fff', bg=self.bg_button, font=self.ar12b, command=self.graphic_adc_csv)
         self.draw_csv_on.place(x=5,y=110)
 
         self.combo_lcard = ttk.Combobox(self.lbf1, value=self.rg2, state='readonly', height=5, width=25)
@@ -261,117 +201,83 @@ class LMeasGUI():
         self.combo_ch.place(x=10,y=15)
         self.combo_ch.current(0)
 
-        self.lab3 = tk.Label(self.tab2, text='Тип:', bg=self.bg_colour, fg=self.fg_colour, font=('arial', 10, 'bold'))
+        self.lab3 = tk.Label(self.tab2, text='Тип:', bg=self.bg_colour, fg=self.fg_colour, font=self.ar10b)
         self.lab3.place(x=10,y=30)
-        self.lab4 = tk.Label(self.tab2, text='Зав.№:', bg=self.bg_colour, fg=self.fg_colour, font=('arial', 10, 'bold'))
+        self.lab4 = tk.Label(self.tab2, text='Зав.№:', bg=self.bg_colour, fg=self.fg_colour, font=self.ar10b)
         self.lab4.place(x=10,y=60)
-        self.lab5 = tk.Label(self.tab2, text='Температура,°C:', bg=self.bg_colour, fg=self.fg_colour, font=('arial', 10, 'bold'))
+        self.lab5 = tk.Label(self.tab2, text='Температура,°C:', bg=self.bg_colour, fg=self.fg_colour, font=self.ar10b)
         self.lab5.place(x=10,y=110)
-        self.lab6 = tk.Label(self.tab2, text='Влажность,%:', bg=self.bg_colour, fg=self.fg_colour, font=('arial', 10, 'bold'))
+        self.lab6 = tk.Label(self.tab2, text='Влажность,%:', bg=self.bg_colour, fg=self.fg_colour, font=self.ar10b)
         self.lab6.place(x=10,y=140)
-        self.lab7 = tk.Label(self.tab2, text='Давление,кПа:', bg=self.bg_colour, fg=self.fg_colour, font=('arial', 10, 'bold'))
+        self.lab7 = tk.Label(self.tab2, text='Давление,кПа:', bg=self.bg_colour, fg=self.fg_colour, font=self.ar10b)
         self.lab7.place(x=10,y=170)
-        self.lab8 = tk.Label(self.tab2, text='Заказчик:', bg=self.bg_colour, fg=self.fg_colour, font=('arial', 10, 'bold'))
+        self.lab8 = tk.Label(self.tab2, text='Заказчик:', bg=self.bg_colour, fg=self.fg_colour, font=self.ar10b)
         self.lab8.place(x=10,y=200)
-        self.lab9 = tk.Label(self.tab2, text='Поверитель:', bg=self.bg_colour, fg=self.fg_colour, font=('arial', 10, 'bold'))
+        self.lab9 = tk.Label(self.tab2, text='Поверитель:', bg=self.bg_colour, fg=self.fg_colour, font=self.ar10b)
         self.lab9.place(x=10,y=230)
-        self.lab10 = tk.Label(self.tab2, text='Название протокола:', bg=self.bg_colour, fg=self.fg_colour, font=('arial', 10, 'bold'))
-        self.lab10.place(x=230,y=180)
-        self.lab11 = tk.Label(self.tab3, text='Режим АЦП/ЦАП:', bg=self.bg_colour, fg=self.fg_colour, font=('arial', 10, 'bold'))
+        self.lab10 = tk.Label(self.tab1, text='Название протокола:', bg=self.bg_colour, fg=self.fg_colour, font=self.ar10b)
+        self.lab10.place(x=20,y=230)
+        self.lab11 = tk.Label(self.tab3, text='Режим АЦП/ЦАП:', bg=self.bg_colour, fg=self.fg_colour, font=self.ar10b)
         self.lab11.place(x=15,y=10)
-        self.lab12 = tk.Label(self.lbf5, text='Частота, кГц:', bg=self.bg_colour, fg=self.fg_colour, font=('arial', 10, 'bold'))
+        self.lab12 = tk.Label(self.lbf5, text='Частота, кГц:', bg=self.bg_colour, fg=self.fg_colour, font=self.ar10b)
         self.lab12.place(x=10,y=10)
-        self.lab13 = tk.Label(self.lbf5, text='Усиление:', bg=self.bg_colour, fg=self.fg_colour, font=('arial', 10, 'bold'))
+        self.lab13 = tk.Label(self.lbf5, text='Усиление:', bg=self.bg_colour, fg=self.fg_colour, font=self.ar10b)
         self.lab13.place(x=10,y=40)
-        self.lab14 = tk.Label(self.lbf5, text='Кол-во циклов:', bg=self.bg_colour, fg=self.fg_colour, font=('arial', 10, 'bold'))
+        self.lab14 = tk.Label(self.lbf5, text='Кол-во циклов:', bg=self.bg_colour, fg=self.fg_colour, font=self.ar10b)
         self.lab14.place(x=10,y=70)
-        self.lab15 = tk.Label(self.lbf8, text='канал', bg=self.bg_colour, fg=self.fg_colour, font=('arial', 10, 'bold'))
+        self.lab15 = tk.Label(self.lbf8, text='канал', bg=self.bg_colour, fg=self.fg_colour, font=self.ar10b)
         self.lab15.place(x=70,y=15)
-        self.lab16 = tk.Label(self.lbf6, text='Частота, Гц:', bg=self.bg_colour, fg=self.fg_colour, font=('arial', 10, 'bold'))
-        self.lab16.place(x=5,y=80)        
+        self.lab16 = tk.Label(self.lbf6, text='Частота, Гц:', bg=self.bg_colour, fg=self.fg_colour, font=self.ar10b)
+        self.lab16.place(x=5,y=80)
 
-        self.entry1 = ttk.Entry(self.tab2, textvariable=self.name_protokol, width=55, font='arial 8')
-        self.entry1.place(x=390, y=180)
-        self.entry2 = ttk.Entry(self.tab2, textvariable=self.temp, width=10, font='arial 8')
+        self.entry1 = ttk.Entry(self.tab1, textvariable=self.vardict_str['name_protokol'], width=55, font=self.ar10b)
+        self.entry1.place(x=170, y=230)
+        self.entry2 = ttk.Entry(self.tab2, textvariable=self.vardict_str['temp'], width=10, font='arial 8')
         self.entry2.place(x=130, y=110)
-        self.entry3 = ttk.Entry(self.tab2, textvariable=self.humi, width=10, font='arial 8')
+        self.entry3 = ttk.Entry(self.tab2, textvariable=self.vardict_str['humi'], width=10, font='arial 8')
         self.entry3.place(x=130, y=140)
-        self.entry4 = ttk.Entry(self.tab2, textvariable=self.press, width=10, font='arial 8')
+        self.entry4 = ttk.Entry(self.tab2, textvariable=self.vardict_str['press'], width=10, font='arial 8')
         self.entry4.place(x=130, y=170)
-        self.entry5 = ttk.Entry(self.tab2, textvariable=self.custom, width=10, font='arial 8')
+        self.entry5 = ttk.Entry(self.tab2, textvariable=self.vardict_str['custom'], width=10, font='arial 8')
         self.entry5.place(x=130, y=200)
-        self.entry6 = ttk.Entry(self.tab2, textvariable=self.pover, width=10, font='arial 8')
-        self.entry6.place(x=130, y=230) 
+        self.entry6 = ttk.Entry(self.tab2, textvariable=self.vardict_str['pover'], width=10, font='arial 8')
+        self.entry6.place(x=130, y=230)
         self.ent_loop = ttk.Entry(self.lbf5, width=11, font='arial 10')
         self.ent_loop.insert(tk.END, 10)
         self.ent_loop.place(x=130,y=70)
-        self.ent_dac1 = ttk.Entry(self.lbf6, textvariable=self.dac1, width=10, font='arial 9')
+        self.ent_dac1 = ttk.Entry(self.lbf6, textvariable=self.vardict_str['dac1'], width=10, font='arial 9')
         self.ent_dac1.place(x=130,y=5)
-        self.ent_dac2 = ttk.Entry(self.lbf6, textvariable=self.dac2, width=10, font='arial 9')
+        self.ent_dac2 = ttk.Entry(self.lbf6, textvariable=self.vardict_str['dac2'], width=10, font='arial 9')
         self.ent_dac2.place(x=130,y=45)
-        self.ent_freq = ttk.Entry(self.lbf6, textvariable=self.freq, width=10, font='arial 9')
+        self.ent_freq = ttk.Entry(self.lbf6, textvariable=self.vardict_str['freq'], width=10, font='arial 9')
         self.ent_freq.place(x=130,y=80)
-        self.ent_adc0 = ttk.Entry(self.lbf7, textvariable=self.adc0, state='readonly', width=10, font='arial 9')
-        self.ent_adc0.place(x=80,y=5)
-        self.ent_adc1 = ttk.Entry(self.lbf7, textvariable=self.adc1, state='readonly', width=10, font='arial 9')
-        self.ent_adc1.place(x=80,y=27)
-        self.ent_adc2 = ttk.Entry(self.lbf7, textvariable=self.adc2, state='readonly', width=10, font='arial 9')
-        self.ent_adc2.place(x=80,y=49)
-        self.ent_adc3 = ttk.Entry(self.lbf7, textvariable=self.adc3, state='readonly', width=10, font='arial 9')
-        self.ent_adc3.place(x=80,y=71)
-        self.ent_adc4 = ttk.Entry(self.lbf7, textvariable=self.adc4, state='readonly', width=10, font='arial 9')
-        self.ent_adc4.place(x=80,y=93)
-        self.ent_adc5 = ttk.Entry(self.lbf7, textvariable=self.adc5, state='readonly', width=10, font='arial 9')
-        self.ent_adc5.place(x=80,y=115)
-        self.ent_adc6 = ttk.Entry(self.lbf7, textvariable=self.adc6, state='readonly', width=10, font='arial 9')
-        self.ent_adc6.place(x=80,y=137)
-        self.ent_adc7 = ttk.Entry(self.lbf7, textvariable=self.adc7, state='readonly', width=10, font='arial 9')
-        self.ent_adc7.place(x=80,y=159)
-        self.ent_adc8 = ttk.Entry(self.lbf7, textvariable=self.adc8, state='readonly', width=10, font='arial 9')
-        self.ent_adc8.place(x=80,y=181)
-        self.ent_adc9 = ttk.Entry(self.lbf7, textvariable=self.adc9, state='readonly', width=10, font='arial 9')
-        self.ent_adc9.place(x=80,y=203)
-        self.ent_adc10 = ttk.Entry(self.lbf7, textvariable=self.adc10, state='readonly', width=10, font='arial 9')
-        self.ent_adc10.place(x=80,y=225)
-        self.ent_adc11 = ttk.Entry(self.lbf7, textvariable=self.adc11, state='readonly', width=10, font='arial 9')
-        self.ent_adc11.place(x=80,y=247)
-        self.ent_adc12 = ttk.Entry(self.lbf7, textvariable=self.adc12, state='readonly', width=10, font='arial 9')
-        self.ent_adc12.place(x=80,y=269)
-        self.ent_adc13 = ttk.Entry(self.lbf7, textvariable=self.adc13, state='readonly', width=10, font='arial 9')
-        self.ent_adc13.place(x=80,y=291)
-        self.ent_adc14 = ttk.Entry(self.lbf7, textvariable=self.adc14, state='readonly', width=10, font='arial 9')
-        self.ent_adc14.place(x=80,y=314)
-        self.ent_adc15 = ttk.Entry(self.lbf7, textvariable=self.adc15, state='readonly', width=10, font='arial 9')
-        self.ent_adc15.place(x=80,y=337) 
 
-        self.k1 = tk.Checkbutton(self.lbf7, text="0 канал: ", variable=self.kvar1, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=5)
-        self.k2 = tk.Checkbutton(self.lbf7, text="1 канал: ", variable=self.kvar2, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=27)
-        self.k3 = tk.Checkbutton(self.lbf7, text="2 канал: ", variable=self.kvar3, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=49)
-        self.k4 = tk.Checkbutton(self.lbf7, text="3 канал: ", variable=self.kvar4, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=71)
-        self.k5 = tk.Checkbutton(self.lbf7, text="4 канал: ", variable=self.kvar5, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=93)
-        self.k6 = tk.Checkbutton(self.lbf7, text="5 канал: ", variable=self.kvar6, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=115)
-        self.k7 = tk.Checkbutton(self.lbf7, text="6 канал: ", variable=self.kvar7, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=137)
-        self.k8 = tk.Checkbutton(self.lbf7, text="7 канал: ", variable=self.kvar8, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=159)
-        self.k9 = tk.Checkbutton(self.lbf7, text="8 канал: ", variable=self.kvar9, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=181)
-        self.k10 = tk.Checkbutton(self.lbf7, text="9 канал:", variable=self.kvar10, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=203)
-        self.k11 = tk.Checkbutton(self.lbf7, text="10 канал:", variable=self.kvar11, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=225)
-        self.k12 = tk.Checkbutton(self.lbf7, text="11 канал:", variable=self.kvar12, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=247)
-        self.k13 = tk.Checkbutton(self.lbf7, text="12 канал:", variable=self.kvar13, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=269)
-        self.k14 = tk.Checkbutton(self.lbf7, text="13 канал:", variable=self.kvar14, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=291)
-        self.k15 = tk.Checkbutton(self.lbf7, text="14 канал:", variable=self.kvar15, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=314)
-        self.k16 = tk.Checkbutton(self.lbf7, text="15 канал:", variable=self.kvar16, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=337)
-        self.k17 = tk.Checkbutton(self.lbf6, text="ЦАП 1:", variable=self.kvar17, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=5)
-        self.k18 = tk.Checkbutton(self.lbf6, text="ЦАП 2:", variable=self.kvar18, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=45)
-        self.k19 = tk.Checkbutton(self.lbf5, text="Запись в CSV", variable=self.kvar19, onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=230,y=10)     
+        self.entry_widget(self.lbf7, 16, [self.vardict_str['adc0'],self.vardict_str['adc1'],self.vardict_str['adc2'],self.vardict_str['adc3'],
+        self.vardict_str['adc4'],self.vardict_str['adc5'],self.vardict_str['adc6'],self.vardict_str['adc7'],self.vardict_str['adc8'],
+        self.vardict_str['adc9'],self.vardict_str['adc10'],self.vardict_str['adc11'],self.vardict_str['adc12'],self.vardict_str['adc13'],self.vardict_str['adc14'],self.vardict_str['adc15']])
+
+        self.checkbut_widget(self.lbf7, 16, ["0 канал: ","1 канал: ","2 канал: ","3 канал: ","4 канал: ","5 канал: ",
+            "6 канал: ", "7 канал: ", "8 канал: ", "9 канал: ", "10 канал: ", "11 канал: ", "12 канал: ", "13 канал: ",
+            "14 канал: ", "15 канал: "], [self.vardict_boo['kvar1'],self.vardict_boo['kvar2'],self.vardict_boo['kvar3'],self.vardict_boo['kvar4'],
+            self.vardict_boo['kvar5'],self.vardict_boo['kvar6'],self.vardict_boo['kvar7'],self.vardict_boo['kvar8'],self.vardict_boo['kvar9'],
+            self.vardict_boo['kvar10'],self.vardict_boo['kvar11'],self.vardict_boo['kvar12'],self.vardict_boo['kvar13'],self.vardict_boo['kvar14'],self.vardict_boo['kvar15'],self.vardict_boo['kvar16']])
+
+        tk.Checkbutton(self.lbf6, text="ЦАП 1:", variable=self.vardict_boo['kvar17'], onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=5)
+        tk.Checkbutton(self.lbf6, text="ЦАП 2:", variable=self.vardict_boo['kvar18'], onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=45)
+        tk.Checkbutton(self.lbf5, text="Запись в CSV", variable=self.vardict_boo['kvar19'], onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=230,y=10)
 
         self.lb2 = tk.Listbox(self.tab2, selectmode='extended', width=47, height=3, relief='ridge', fg='blue', font=("Arial", 15, 'bold'))
         self.lb2.place(x=210, y=70)
 
         self.progress1 = ttk.Progressbar(self.tab2, orient='horizontal', mode='determinate', length=730, value=0)
-        self.progress1.place(x=5, y=395)      
+        self.progress1.place(x=5, y=395)
 
-    def protokol(self): 
-        rep = filedialog.askopenfilenames(parent=self.parent, initialdir='{}\\Protocol\\'.format(self.folder_1),
+    def date_time(self):
+        today = datetime.today()
+        self.data_today = today.strftime('%d-%m-%Y,%H-%M-%S')
+
+    def protokol(self):
+        rep = filedialog.askopenfilenames(parent=self.parent, initialdir=f'{self.folder_1}\\Protocol\\',
                                           initialfile='',
                                           filetypes=[("xlsx", "*.xlsx"),("All files", "*")])
         try:
@@ -382,7 +288,7 @@ class LMeasGUI():
     def win_one(self, name_win, size_win):
         self.top = tk.Toplevel(self.parent)
         self.top.title(name_win)
-        self.top.iconbitmap('{}\\icon\\icon.ico'.format(self.folder_1))
+        self.top.iconbitmap(f'{self.folder_1}\\icon\\icon.ico')
         self.top.resizable(0, 0)
         w = self.top.winfo_screenwidth()
         h = self.top.winfo_screenheight()
@@ -391,117 +297,108 @@ class LMeasGUI():
         w = w - 200
         h = h - 200
         self.top.geometry(size_win.format(w, h))
-    
+
     def about_win(self):
         self.win_one('О программе', '500x300+{}+{}')
-        text1 = ('LMeas v1.13\rDate: 2021-10-26\rAutor: ITL ©')
+        text1 = ('LMeas v1.14\rDate: 2022-12-02\rAutor: g1enden (I T L)')
         text2 = ('Поддерживаемые L-CARD:\rE14-440\rE14-440D\rE-502')
-        
+
         top_1 = tk.Frame(self.top, height=70, relief="raise")
         top_1.pack(side='top', fill='x')
         top_2 = tk.Frame(self.top, height=30, relief="raise")
         top_2.pack(side='top', fill='x')
 
-        _mick = tk.Label(top_1, image=self.img1).place(x=10,y=10)
-        _autor = tk.Label(top_1, justify='left', text=text1, font=("Arial", 10, "bold"), foreground='deepskyblue4').place(x=260,y=5)
-        _support_1 = tk.Label(top_2, justify='center', text=text2, font=('arial', 10, 'bold'), foreground='deepskyblue4').grid(row=0, column=0)
-        _button = tk.Button(self.top, text='OK', width=10, fg='#fff', bg=self.bg_button, font=("Arial", 12, 'bold'), command=self.top.destroy)
+        img_about = tk.Label(top_1, image=self.img1)
+        img_about.place(x=10,y=10)
+        autor = tk.Label(top_1, justify='left', text=text1, font=self.ar10b, foreground='deepskyblue4')
+        autor.place(x=260,y=5)
+        support = tk.Label(top_2, justify='center', text=text2, font=self.ar10b, foreground='deepskyblue4')
+        support.grid(row=0, column=0)
+        _button = tk.Button(self.top, text='OK', width=10, fg='#fff', bg=self.bg_button, font=self.ar12b, command=self.top.destroy)
         _button.place(x=200,y=250)
+
+    def checkbut_widget(self, frm, rng_i, ch_text, ch_var):
+        for i in range(rng_i):
+            tk.Checkbutton(frm, text=ch_text[i], variable=ch_var[i], onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).grid(row=i, column=0, sticky="w")
+
+    def entry_widget(self, frm, rng_i, ch_text):
+        for i in range(rng_i):
+            ttk.Entry(frm, textvariable=ch_text[i], state='readonly', width=10, font='arial 9').grid(row=i, column=1, sticky="w")
 
     def setting_win(self):
         self.win_one('Настройки', '220x250+{}+{}')
         try:
-            _c1 = tk.Checkbutton(self.top, text="Постоянное напряжение", variable=self.cvar1, onvalue=1, offvalue=0).pack(anchor='w')
-            _c2 = tk.Checkbutton(self.top, text="Заглушка", variable=self.cvar2, onvalue=1, offvalue=0).pack(anchor='w')
-            _c3 = tk.Checkbutton(self.top, text="Переменное напряжение: 0 канал", variable=self.cvar3, onvalue=1, offvalue=0).pack(anchor='w')
-            _c4 = tk.Checkbutton(self.top, text="Переменное напряжение", variable=self.cvar4, onvalue=1, offvalue=0).pack(anchor='w')
-            _c5 = tk.Checkbutton(self.top, text="ЦАП1", variable=self.cvar5, onvalue=1, offvalue=0).pack(anchor='w')
-            _c6 = tk.Checkbutton(self.top, text="ЦАП2", variable=self.cvar6, onvalue=1, offvalue=0).pack(anchor='w')              
+            self.checkbut_widget(self.top, 6, ["DC","Заглушка","AC: 0 канал","AC","ЦАП1","ЦАП2"],
+                [self.vardict_boo['cvar1'],self.vardict_boo['cvar2'],self.vardict_boo['cvar3'],self.vardict_boo['cvar4'],self.vardict_boo['cvar5'],self.vardict_boo['cvar6']])
         except AttributeError:
-            _clab = tk.Label(self.top, text='Прибор не определён', font='arial 13', foreground='deepskyblue4').pack(anchor='w')
+            clab = tk.Label(self.top, text='Прибор не определён', font='arial 13', foreground='deepskyblue4')
+            clab.pack(anchor='w')
 
-        _button = tk.Button(self.top, text="OK", width=12, fg='#fff', bg=self.bg_button, font=("Arial", 12, 'bold'), command=self.top.destroy)
+        _button = tk.Button(self.top, text="OK", width=12, fg='#fff', bg=self.bg_button, font=self.ar12b, command=self.top.destroy)
         _button.place(x=40,y=210)
 
     def set_style_win(self):
         self.win_one('Стили', '350x300+{}+{}')
-        self.lab_style = tk.Label(self.top, text='Цветовая тема:', font=('arial', 10, 'bold'))
-        self.lab_style.place(x=20,y=15)
-        self.combo_style = ttk.Combobox(self.top, state='readonly', values=['Dark', 'Light'], height=5, width=25)
-        self.combo_style.place(x=150, y=15)
-        self.lab_lang = tk.Label(self.top, text='Язык:', font=('arial', 10, 'bold'))
-        self.lab_lang.place(x=20,y=45)
-        self.combo_lang = ttk.Combobox(self.top, state='readonly', values=['Русский', 'Английский'], height=5, width=25)
-        self.combo_lang.place(x=150, y=45)
+        lab_style = tk.Label(self.top, text='Цветовая тема:', font=self.ar10b)
+        lab_style.place(x=20,y=15)
+        combo_style = ttk.Combobox(self.top, state='readonly', values=['Dark', 'Light'], height=5, width=25)
+        combo_style.current(0)
+        combo_style.place(x=150, y=15)
+        lab_lang = tk.Label(self.top, text='Язык:', font=self.ar10b)
+        lab_lang.place(x=20,y=45)
+        combo_lang = ttk.Combobox(self.top, state='readonly', values=['Russia', 'English'], height=5, width=25)
+        combo_lang.current(0)
+        combo_lang.place(x=150, y=45)
 
         def set_ok():
-            if self.combo_style.get() == 'Dark':
-                self.config_json['bg_colour'] = "#848a98"
-                self.config_json['fg_colour'] = "gold"
-                self.config_json['bg_button'] = "#6699CC"
-            elif self.combo_style.get() == 'Light':
-                self.config_json['bg_colour'] = "snow3"
-                self.config_json['fg_colour'] = "cyan4"
-                self.config_json['bg_button'] = "cyan4"
-            
-            self.config_json['pastel_setting']["."]["configure"]["background"] = self.config_json['bg_colour']
-            self.config_json['pastel_setting']["TNotebook"]["configure"]["background"] = self.config_json['bg_colour']
-            self.config_json['pastel_setting']["TNotebook.Tab"]["configure"]["background"] = self.config_json['bg_colour']
-            self.config_json['pastel_setting']["TNotebook.Tab"]["map"]["background"] = [["selected",self.config_json['fg_colour']]]                
-            
-            with open('{}\\libr\\setting.json'.format(self.folder_1), 'w', encoding='utf-8') as file_json:
-                json.dump(self.config_json, file_json, ensure_ascii=False, indent=4, sort_keys=True)
+            self.sett_json['language'] = combo_lang.get()
+            self.sett_json['theme'] = combo_style.get()
+
+            with open(f'{self.folder_1}\\setting.json', 'w', encoding='utf-8') as file_json:
+                json.dump(self.sett_json, file_json, ensure_ascii=False, indent=4, sort_keys=True)
+
             self.parent.destroy()
             try:
-                if self.bn == 'E440':
-                    print ('StopDevice', self.wl.StopLDevice(self.hIfc))
-                    print ('CloseDevice', self.wl.CloseLDevice(self.hIfc))
-                elif self.bn == 'E502':
-                    self.context.close()
                 self.inst_dmm.close()
                 self.inst_fluke.close()
             except AttributeError:
-                print ('Стиль изменён')            
-            os.system('{}\\LMeas.py'.format(self.folder_1))
+                print ('Стиль изменён')
+            os.system(f'{self.folder_1}\\LMeas.py')
 
-        _button = tk.Button(self.top, text="Применить", width=12, fg='#fff', bg=self.bg_button, font=("Arial", 12, 'bold'), command=set_ok)
+        _button = tk.Button(self.top, text="Применить", width=12, fg='#fff', bg=self.bg_button, font=self.ar12b, command=set_ok)
         _button.place(x=120,y=250)
 
     def cnt(self):
-        e440_1 = sum(1 for line in open('{}\\file_py\\e440.py'.format(self.folder_1), encoding='utf-8') if line.lstrip().startswith('_th440 = Call('))
-        e440_2 = sum(1 for line in open('{}\\file_py\\e440.py'.format(self.folder_1), encoding='utf-8') if line.lstrip().startswith('_th440 = Ldac('))
+        e440_1 = sum(1 for line in open(f'{self.folder_1}\\file_py\\e440.py', encoding='utf-8') if line.lstrip().startswith('Call('))
+        e440_2 = sum(1 for line in open(f'{self.folder_1}\\file_py\\e440.py', encoding='utf-8') if line.lstrip().startswith('Ldac('))
         e440_3 = e440_1 + e440_2
-        e140_1 = sum(1 for line in open('{}\\file_py\\e140.py'.format(self.folder_1), encoding='utf-8') if line.lstrip().startswith('_th140 = Call('))
-        e140_2 = sum(1 for line in open('{}\\file_py\\e140.py'.format(self.folder_1), encoding='utf-8') if line.lstrip().startswith('_th140 = Ldac('))
+        e140_1 = sum(1 for line in open(f'{self.folder_1}\\file_py\\e140.py', encoding='utf-8') if line.lstrip().startswith('Call('))
+        e140_2 = sum(1 for line in open(f'{self.folder_1}\\file_py\\e140.py', encoding='utf-8') if line.lstrip().startswith('Ldac('))
         e140_3 = e140_1 + e140_2
-        e502_1 = sum(1 for line in open('{}\\file_py\\e502.py'.format(self.folder_1), encoding='utf-8') if line.lstrip().startswith('_th502 = Call('))
-        e502_2 = sum(1 for line in open('{}\\file_py\\e502.py'.format(self.folder_1), encoding='utf-8') if line.lstrip().startswith('_th502 = Ldac('))
+        e502_1 = sum(1 for line in open(f'{self.folder_1}\\file_py\\e502.py', encoding='utf-8') if line.lstrip().startswith('Call('))
+        e502_2 = sum(1 for line in open(f'{self.folder_1}\\file_py\\e502.py', encoding='utf-8') if line.lstrip().startswith('Ldac('))
         e502_3 = e502_1 + e502_2
-        return [e440_1, e440_3, e140_1, e140_3, e502_3]
-
-    def next(self):
-        self.tab_control.select(self.tab2)
+        return {'E440':e440_1, 'E440D':e440_3, 'E140':e140_1, 'E140D':e140_3,'E502':e502_3}
 
     def visa_search(self):
         #self.rm = pyvisa.ResourceManager(visa_library='C:/Program Files/IVI Foundation/VISA/Win64/agvisa/agbin/visa32.dll')
         self.rm = pyvisa.ResourceManager()
-        self.rm_tuple = self.rm.list_resources()
-        self.rm_list = list(self.rm_tuple)
+        self.rm_list = list(self.rm.list_resources())
         return self.rm_list
 
     def decay_cycle(self, rm):
-        for j, item in enumerate(self.rg6):
-            if re.search(list(self.rg6.keys())[j], rm):
-                rm = list(self.rg6.values())[j]
+        for j, _ in enumerate(self.sign_pribor):
+            if re.search(list(self.sign_pribor.keys())[j], rm):
+                rm = list(self.sign_pribor.values())[j]
         return rm
 
     def adres_cycle(self, combo_dmm, rm):
-        for j, item in enumerate(self.rg6):
-            if combo_dmm == list(self.rg6.values())[j]:
-                adres = list(filter(lambda rmt: list(self.rg6.keys())[j] in rmt, rm))
+        for j, _ in enumerate(self.sign_pribor):
+            if combo_dmm == list(self.sign_pribor.values())[j]:
+                adres = list(filter(lambda rmt: list(self.sign_pribor.keys())[j] in rmt, rm))
                 if len(adres) > 0:
                     return adres
-        
+
         if combo_dmm[:4] in ('ASRL', 'USB0', 'TCPI'):
             return [combo_dmm]
 
@@ -510,7 +407,7 @@ class LMeasGUI():
         self.lb.insert('end', 'Обнаруженные приборы и порты:')
         self.lb.itemconfig('end', bg='light cyan')
         self.visa_search()
-        decay_list = list(map(self.decay_cycle, self.rm_list))           
+        decay_list = list(map(self.decay_cycle, self.rm_list))
         self.lb.insert('end', *decay_list)
         self.combo_dmm.configure(values=decay_list)
         #self.combo_dmm.current(0)
@@ -552,33 +449,25 @@ class LMeasGUI():
         self.bn = pd.contents.BrdName.decode('utf-8')
         self.sn = pd.contents.SerNum.decode('utf-8')
         self.dac = ord(pd.contents.IsDacPresent)
-        
+
         self.wl.RequestBufferStream(self.hIfc, Size, 1)     # L_STREAM_ADC = 1
-        print ('Allocated memory size(word): '), Size[0]
+        print ('Allocated memory size(word):', Size[0])
         self.combo_frq.configure(value=self.rg4)
         self.combo_frq.current(0)
         self.combo_amp.configure(value=list(self.rg5.keys()))
         self.combo_amp.current(0)
         if self.dac == 1:
-            if self.bn == 'E440':
-                self.progr = self.cnt()[1]
-            elif self.bn == 'E140':
-                self.progr = self.cnt()[3]
+            self.bn = self.bn + 'D'
             self.set_dac.configure(state='normal')
             self.dmm_on.configure(state='normal')
-            self.connect_lcard_set(self.bn + 'D', self.sn) 
         else:
-            if self.bn == 'E440':
-                self.progr = self.cnt()[0]
-            elif self.bn == 'E140':
-                self.progr = self.cnt()[2]
             self.set_dac.configure(state='disabled')
-            self.connect_lcard_set(self.bn, self.sn)
+        self.connect_lcard_set(self.bn, self.sn)
         self.draw_on.configure(state='normal')
 
     def close_lc(self):
         try:
-            if self.bn == 'E440':
+            if self.bn in ('E440', 'E440D'):
                 print ('StopDevice', self.wl.StopLDevice(self.hIfc))
                 print ('CloseDevice', self.wl.CloseLDevice(self.hIfc))
             elif self.bn == 'E502':
@@ -589,7 +478,7 @@ class LMeasGUI():
         self.lc_off.configure(state='disabled')
         self.dmm_on.configure(state='disabled')
         self.start_on.configure(state='disabled')
-    
+
     def exit_lmeas(self):
         self.close_lc()
         self.parent.destroy()
@@ -610,7 +499,6 @@ class LMeasGUI():
         info_e502_1 = info_e502_0.decode('UTF-8')
         self.bn = info_e502_1[0:4]
         self.sn = info_e502_1[32:40]
-        self.progr = self.cnt()[4]
         self.combo_frq.configure(value=self.rg4_e502)
         self.combo_frq.current(0)
         self.combo_amp.configure(value=list(self.rg5_e502.keys()))
@@ -620,57 +508,49 @@ class LMeasGUI():
         self.connect_lcard_set(self.bn, self.sn)
 
     def connect_lcard_set(self, bord_name, ser_num):
-        print('Тип: {}'.format(bord_name))
-        print('Зав.№: {}'.format(ser_num))
-        today = datetime.now()
-        self.data_today = today.strftime('%d-%m-%Y,%H-%M-%S')
-        self.name_protokol.set('{},{},{}.xlsx'.format(self.data_today, bord_name, ser_num))
-        self.b14 = 'LCARD {} №{} подключена'.format(bord_name, ser_num)
+        print(f'Тип: {bord_name}')
+        print(f'Зав.№: {ser_num}')
+        self.date_time()
+        self.vardict_str['name_protokol'].set(f'{self.data_today},{bord_name},{ser_num}.xlsx')
+        self.b14 = f'LCARD {bord_name} №{ser_num} подключена'
         self.tree.insert('', 'end', text='', image=self.img2, values=('LCARD', bord_name, ser_num, ''))
-        self.lab3['text'] = 'Тип: {}'.format(bord_name)
-        self.lab4['text'] = 'Зав.№: {}'.format(ser_num)
+        self.lab3['text'] = f'Тип: {bord_name}'
+        self.lab4['text'] = f'Зав.№: {ser_num}'
         self.lb.insert('end', self.b14)
         self.lb.see('end')
-        self.lb.itemconfig('end', bg = 'cyan')
+        self.lb.itemconfig('end', bg = 'light cyan')
         self.lc_on.configure(state='disabled')
         self.lc_off.configure(state='normal')
         self.start_on.configure(state='normal')
         self.meas_on.configure(state='normal')
 
     def connect_dmm(self):
-        '''for i, item_1 in enumerate(self.rm_list):
-            for j, item_2 in enumerate(self.rg6):
-                if self.combo_dmm.get() == list(self.rg6.values())[j]:
-                    if re.search(list(self.rg6.keys())[j], self.rm_tuple[i]):
-                        self.inst_dmm = self.rm.open_resource(self.rm_tuple[i])
-       
-        if self.combo_dmm.get()[:4] in ('ASRL', 'USB0', 'TCPI'):
-            self.inst_dmm = self.rm.open_resource(self.combo_dmm.get())
-            self.inst_dmm.write('SYST:REM')
-            time.sleep(1)'''
-        
         self.inst_dmm = self.rm.open_resource(self.adres_cycle(self.combo_dmm.get(), self.rm_list)[0])
         if self.combo_dmm.get()[:4] in ('ASRL', 'USB0', 'TCPI'):
             self.inst_dmm.write('SYST:REM')
             time.sleep(1)
-            
+
         self.data_0 = self.inst_dmm.query("*IDN?")
-        self.connect_pribor_set('Мультиметр', 'cyan')
-    
+        self.connect_pribor_set('Мультиметр', 'light cyan')
+
     def connect_fluke_5500(self):
         try:
             self.inst_fluke = self.rm.open_resource(self.combo_flu.get(), baud_rate=9600, data_bits=8, write_termination='\r', read_termination='\r')
-            time.sleep(0.5)
+            time.sleep(1)
             self.inst_fluke.write('*IDN?')
-            self.data_0 = my_gui.inst_fluke.read()
-            self.connect_pribor_set('Калибратор', 'aquamarine')
+            self.data_0 = self.inst_fluke.read()
+            self.connect_pribor_set('Калибратор', 'light cyan')
+            if self.b1[1] == 'N4-56':
+                self.calbr = self.sett_json['N4-56']
+            elif self.b1[1] in ('5522A', '5500E'):
+                self.calbr = self.sett_json['5522A']
         except:
             self.lb.insert('end', 'Ошибка: Калибратор не определён')
-            self.lb.itemconfig('end', bg='red')
-    
+            self.lb.itemconfig('end', bg='salmon')
+
     def connect_pribor_set(self, name_pribor, color):
         self.b1 = self.data_0.split(',')
-        self.b10 = '{} {} подключен'.format(name_pribor, self.b1[1])
+        self.b10 = f'{name_pribor} {self.b1[1]} подключен'
         self.lb.insert('end', self.b10)
         self.lb.see('end')
         self.lb.itemconfig('end', bg = color)
@@ -688,43 +568,65 @@ class LMeasGUI():
                         cell.fill = colour
 
     def border_cell(self):
-        self.wb.save('{}\\Protocol\\{}'.format(self.folder_1, self.name_protokol.get()))
+        self.wb.save('{}\\Protocol\\{}'.format(self.folder_1,self.vardict_str['name_protokol'].get()))
         time.sleep(1)
         self.progress1.step(1)
 
     def start(self):
-        self.progress1.configure(maximum = self.progr)
-        self.lb.insert('end', 'Время начала: {}'.format(self.data_today[11:]))
-        self.wb = load_workbook('{}\\shablon\\{}.xlsx'.format(self.folder_1, self.bn))
+        self.progress1.configure(maximum = self.cnt()[self.bn])
+        self.lb.insert('end', f'Время начала: {self.data_today[11:]}')
+        self.wb = load_workbook(f'{self.folder_1}\\shablon\\{self.bn[:4]}.xlsx')
         self.ws = self.wb.active
-        with open('{}\\file_py\\{}.py'.format(self.folder_1, self.bn), encoding='utf-8') as lc_file:
+        with open(f'{self.folder_1}\\file_py\\{self.bn[:4]}.py', encoding='utf-8') as lc_file:
             exec(lc_file.read())
 
+    def graphic_adc(self):
+        fig = figure(1)
+        ax1 = fig.add_subplot(211)
+        ax1.plot(y2[int(self.combo_ch.get())], x2[int(self.combo_ch.get())])
+        ax1.grid(True)
+        #ax1.set_xlim((0, 0.5))
+        ax1.set_ylabel('U, V')
+        l1=ax1.set_title('t, sec')
+        l1.set_color('g')
+        l1.set_fontsize('large')
+        show()
+
+    def graphic_adc_csv(self):
+        data_plot = np.genfromtxt(f'{self.folder_1}\\csv\\lcard_phase.csv', delimiter=',', names=['phase1', 'phase2', 'phase3', 'time_phase'])
+        plt.plot(data_plot['time_phase'], data_plot['phase1'], data_plot['time_phase'], data_plot['phase2'], data_plot['time_phase'], data_plot['phase3'])
+        plt.title('L-CARD graph from csv')
+        plt.ylabel('Voltage, mV')
+        plt.xlabel('time, sec')
+        #plt.xlim(0, 0.02)
+        #plt.ylim(0, 2.5)
+        plt.show()
+
     def measure_adc(self):
-        if self.bn == 'E440':
-            _adc = Callpar(float(self.combo_frq.get()), self.rg5.get(self.combo_amp.get()))
-            _adc = Meas_adc(float(self.combo_amp.get()), int(self.ent_loop.get()))
+        if self.bn in ('E440', 'E440D'):
+            Callpar(float(self.combo_frq.get()), self.rg5.get(self.combo_amp.get()))
+            Meas_adc(float(self.combo_amp.get()), int(self.ent_loop.get()))
         elif self.bn == 'E502':
-            _adc = Callpar(int(self.combo_frq.get()), int(self.rg5_e502.get(self.combo_amp.get())))
-            _adc = Meas_adc(float(self.combo_amp.get()), int(self.ent_loop.get()))
+            Callpar(int(self.combo_frq.get()), int(self.rg5_e502.get(self.combo_amp.get())))
+            Meas_adc(float(self.combo_amp.get()), int(self.ent_loop.get()))
 
     def measure_dac(self):
-        if self.bn == 'E440':
-            if self.kvar17.get() == 1:
-                _dac = Meas_dac('0 DC', float(self.ent_dac1.get()))
-            if self.kvar18.get() == 1:
-                _dac = Meas_dac('1 DC', float(self.ent_dac2.get()))
+        if self.bn == 'E440D':
+            if self.vardict_boo['kvar17'].get() == 1:
+                Meas_dac('0 DC', float(self.ent_dac1.get()))
+            if self.vardict_boo['kvar18'].get() == 1:
+                Meas_dac('1 DC', float(self.ent_dac2.get()))
         elif self.bn == 'E502':
             if self.combo_rez.get() == 'DC':
-                if self.kvar17.get() == 1:
-                    _dac = Meas_dac('16 DC', float(self.ent_dac1.get()))
-                if self.kvar18.get() == 1:
-                    _dac = Meas_dac('32 DC', float(self.ent_dac2.get()))
+                if self.vardict_boo['kvar17'].get() == 1:
+                    Meas_dac('16 DC', float(self.ent_dac1.get()))
+                if self.vardict_boo['kvar18'].get() == 1:
+                    Meas_dac('32 DC', float(self.ent_dac2.get()))
             if self.combo_rez.get() == 'AC':
-                if self.kvar17.get() == 1:
-                    _dac = Meas_dac('16 AC', float(self.ent_dac1.get()), float(my_gui.ent_freq.get()))
-                if self.kvar18.get() == 1:
-                    _dac = Meas_dac('32 AC', float(self.ent_dac2.get()), float(my_gui.ent_freq.get()))
+                if self.vardict_boo['kvar17'].get() == 1:
+                    Meas_dac('16 AC', float(self.ent_dac1.get()), float(my_gui.ent_freq.get()))
+                if self.vardict_boo['kvar18'].get() == 1:
+                    Meas_dac('32 AC', float(self.ent_dac2.get()), float(my_gui.ent_freq.get()))
 # ====================================================================================
 class Callpar(Thread):
     def __init__(self, dRate, Amp):
@@ -748,7 +650,7 @@ class Callpar(Thread):
         pp.contents.AdChannel = 0
         pp.contents.AdPorog = 0
         pp.contents.NCh = 16
-        
+
         get_bin = lambda x, n: format(x, 'b').zfill(n)
         for p in range(16):
             j = get_bin(p, 4)           # перебор каналов
@@ -760,13 +662,13 @@ class Callpar(Thread):
         pp.contents.Pages = 32
         pp.contents.IrqEna = 1
         pp.contents.AdcEna = 1
-                    
+
         my_gui.wl.FillDAQparameters(my_gui.hIfc, pp, 2)
-        
-        my_gui.wl.SetParametersStream(my_gui.hIfc, pp, 2, Size, 
-                               ctypes.cast(ctypes.pointer(Data), ctypes.POINTER(ctypes.c_void_p)), 
-                               ctypes.cast(ctypes.pointer(Sync), ctypes.POINTER(ctypes.c_void_p)), 1)   # L_STREAM_ADC = 1      
-        
+
+        my_gui.wl.SetParametersStream(my_gui.hIfc, pp, 2, Size,
+                               ctypes.cast(ctypes.pointer(Data), ctypes.POINTER(ctypes.c_void_p)),
+                               ctypes.cast(ctypes.pointer(Sync), ctypes.POINTER(ctypes.c_void_p)), 1)   # L_STREAM_ADC = 1
+
         fr = pp.contents.dRate * 1000   #Hz
         N = pp.contents.NCh
 
@@ -774,7 +676,7 @@ class Callpar(Thread):
         global number_ch
         number_ch = 15
         data_ch_writ = my_gui.handle.controlWrite(0x40, 0x11, 0x200+0x100, 0, pack( "I", number_ch))    # кол-во каналов
-        
+
         j = 8 * number_ch + self.Amp        # Amp - усиление (0:10V; 1:5V; 2:2V; 3:1V; 4:0,5V; 5:0,2V)
         for i in range(number_ch + 1):
             data_table_writ = my_gui.handle.controlWrite(0x40, 0x11, 512 + i, 0, pack( "I", j))         # таблица настроек 0x200+0x0
@@ -785,7 +687,7 @@ class Callpar(Thread):
 
     def run(self):
         sem.acquire()
-        if my_gui.bn == 'E440':
+        if my_gui.bn in ('E440', 'E440D'):
             self.callpar_e14()
         elif my_gui.bn == 'E502':
             self.callpar_e502()
@@ -814,8 +716,8 @@ class Meas_adc(Thread):
         data_synch_writ = my_gui.handle.controlWrite(0x40, 0x11, 0x400+0x19, 0, pack( "I", 1))     # IN_STREAM_ENABLE
         data_preload_adc = my_gui.handle.controlWrite(0x40, 0x11, 0x200+0x10C, 0, pack( "I", 1))   # запись 1 в регистр 0x10C
         data_preload_adc = my_gui.handle.controlWrite(0x40, 0x11, 0x200+0x10C, 0, pack( "I", 1))   # запись 1 в регистр 0x10C
-        data_syn_wrt = my_gui.handle.controlWrite(0x40, 0x11, 0x200+0x10A, 0, pack( "I", 1))       # запуск синхронного ввода-вывода    
-        
+        data_syn_wrt = my_gui.handle.controlWrite(0x40, 0x11, 0x200+0x10A, 0, pack( "I", 1))       # запуск синхронного ввода-вывода
+
         self.point = pts
         self.smooth_pts = smooth_pts
         size_data_bulk = (4 * (number_ch + 1)) * 8      # 512
@@ -851,26 +753,26 @@ class Meas_adc(Thread):
         global y2
         my_gui.wl.EnableCorrection(my_gui.hIfc, 1)
         my_gui.wl.InitStartLDevice(my_gui.hIfc)
-        my_gui.wl.StartLDevice(my_gui.hIfc)       
+        my_gui.wl.StartLDevice(my_gui.hIfc)
 
-        if my_gui.kvar19.get() == 1:
+        if my_gui.vardict_boo['kvar19'].get() == 1:
             fieldnames = ['phase1', 'phase2', 'phase3', 'time_phase']
-            csvfile =  open('{}\\csv\\lcard_phase.csv'.format(my_gui.folder_1), 'w', newline='')
+            csvfile =  open(f'{my_gui.folder_1}\\csv\\lcard_phase.csv', 'w', newline='')
             write = csv.DictWriter(csvfile, fieldnames = fieldnames)
             write.writeheader()
             t1 = time.time()
 
         point = 32768
-        V = self.nloop             
+        V = self.nloop
         y = array.array('f', ())
         y2 = [array.array('f', ()) for _ in range(N)]
         x1 = array.array('f', ())
         x2 = [array.array('f', ()) for _ in range(N)]
-        
-        for j in range(V):
+
+        for _ in range(V):
             for k in range(N):
                 i = k
-                while i < point:      
+                while i < point:
                     if Data[i] < 10000:
                         data_lc = Data[i] * (self.pred / 8000)
                     else:
@@ -884,7 +786,7 @@ class Meas_adc(Thread):
                 y = array.array('f', ())
 
             self.var_ent = array.array('f', ())
-            for k in range(N):            
+            for k in range(N):
                 if my_gui.combo_rez.get() == 'DC':
                     data_adc = sum(x2[k]) / (point / N)
                 if my_gui.combo_rez.get() == 'AC':
@@ -893,7 +795,7 @@ class Meas_adc(Thread):
                 self.var_ent.append(data_adc * 1000)
                 print ('Chn', k, data_adc)
 
-            if my_gui.kvar19.get() == 1:
+            if my_gui.vardict_boo['kvar19'].get() == 1:
                 t2 = time.time()
                 write.writerow({'phase1': self.var_ent[1], 'phase2': self.var_ent[2], 'phase3': self.var_ent[15], 'time_phase': t2 - t1})
 
@@ -905,7 +807,7 @@ class Meas_adc(Thread):
         my_gui.meas_on.configure(state='disabled')
         my_gui.canvas_1.itemconfig(my_gui.oval_1, fill="green")
 
-        if my_gui.bn == 'E440':
+        if my_gui.bn in ('E440', 'E440D'):
             self.start_meas_e14()
         elif my_gui.bn == 'E502':
             self.start_meas_e502(8192*(number_ch + 1)*(16 - number_ch), 1)
@@ -917,10 +819,10 @@ class Meas_adc(Thread):
                     data_adc = (math.sqrt(sum(i*i for i in self.x6[k][819:]) / len(self.x6[k][819:])))
                 self.var_ent.append(data_adc * 1000)
                 print ('Chn', k, data_adc)
-
+        
         for i in range(16):
-            if eval('my_gui.kvar' + str(1 + i)).get() == 1:
-                eval('my_gui.adc' + str(i)).set(str(self.var_ent[i]))
+            if my_gui.vardict_boo['kvar'+str(i+1)].get() == 1:
+                my_gui.vardict_str['adc'+str(i)].set(str(self.var_ent[i]))
 
         my_gui.canvas_1.itemconfig(my_gui.oval_1, fill="white")
         my_gui.statusbar["text"] = 'Статус: ожидание...'
@@ -943,13 +845,13 @@ class Call(Meas_adc):
         my_gui.wl.InitStartLDevice(my_gui.hIfc)
         my_gui.wl.StartLDevice(my_gui.hIfc)
         time.sleep(2)
-        
-        point = 32768 
-        V = 10      
+
+        point = 32768
+        V = 20
         x1 = array.array('f', ())
         x2 = [array.array('f', ()) for _ in range(N)]
-        
-        for j in range(V):
+
+        for _ in range(V):
             for k in range(N):
                 i = k
                 while i < point:
@@ -960,27 +862,27 @@ class Call(Meas_adc):
                     x1.append(data_lc)
                     i += N
                 x2[k] = x1
-                x1 = array.array('f', ())       
-        
+                x1 = array.array('f', ())
+
         my_gui.wl.StopLDevice(my_gui.hIfc)
 
         for k in range(N):
-            if self.rez == 'dc':
+            if self.rez == 'dcv':
                 data_adc = sum(x2[k]) / (point / N)
-            elif self.rez in ('ac', 'acz'):
+            elif self.rez in ('acv', 'acz'):
                 data_adc = ((max(x2[k]) - min(x2[k])) / (1.4142135 * 2))
             elif self.rez == 'ac0':
                 data_adc = ((max(x2[0]) - min(x2[0])) / (1.4142135 * 2))
-            
+
             data_adc = round(data_adc, 4)
             #print ('Chn', k, data_adc)
-            
+
             if self.rez == 'acz':
                 data_accur = 100 * (data_adc / self.pred) * math.sqrt(8192 / (8192 - 1))
             else:
-                data_accur = ((data_adc - float(self.volt1.split(' ')[1])) / self.pred) * 100
-            
-            if self.rez in ('dc', 'ac'):
+                data_accur = ((data_adc - float(self.volt1.split(' ')[0])) / self.pred) * 100
+
+            if self.rez in ('dcv', 'acv'):
                 xi2 = self.xi[0] + str(int(self.xi[1:]) + k)
                 yi2 = self.yi[0] + str(int(self.yi[1:]) + k)
             elif self.rez == 'acz':
@@ -993,16 +895,16 @@ class Call(Meas_adc):
             my_gui.change_rows(xi2, data_adc * 1000, yi2, data_accur, self.accurancy)
 
     def call_e502(self):
-        if self.rez in ('ac'):
-            if float(self.volt1.split(' ')[3]) == 0.01:
-                if float(self.volt1.split(' ')[1]) < 0.04:
+        if self.rez in ('acv'):
+            if float(self.volt1.split(' ')[2]) == 0.01:
+                if float(self.volt1.split(' ')[0]) < 0.04:
                     self.start_meas_e502(10*8192*(number_ch + 1)*(16 - number_ch), 250)
                 else:
                     self.start_meas_e502(10*8192*(number_ch + 1)*(16 - number_ch), 4)
-            elif float(self.volt1.split(' ')[3]) == 1.0:
-                if float(self.volt1.split(' ')[1]) < 0.041 or float(self.volt1.split(' ')[1]) > 0.021:
+            elif float(self.volt1.split(' ')[2]) == 1.0:
+                if float(self.volt1.split(' ')[0]) < 0.041 or float(self.volt1.split(' ')[0]) > 0.021:
                     self.start_meas_e502(8192*(number_ch + 1)*(16 - number_ch), 3)
-                elif float(self.volt1.split(' ')[1]) < 0.021 or float(self.volt1.split(' ')[1]) > 0.009:
+                elif float(self.volt1.split(' ')[0]) < 0.021 or float(self.volt1.split(' ')[0]) > 0.009:
                     self.start_meas_e502(8192*(number_ch + 1)*(16 - number_ch), 7)
             else:
                 self.start_meas_e502(8192*(number_ch + 1)*(16 - number_ch), 1)
@@ -1011,17 +913,17 @@ class Call(Meas_adc):
             self.start_meas_e502(8192*(number_ch + 1)*(16 - number_ch), 1)
 
         for k in range(number_ch + 1):
-            if self.rez == 'dc':
+            if self.rez == 'dcv':
                 data_adc = sum(self.x6[k]) / (self.point / (number_ch + 1))
-                data_accur = ((data_adc - float(self.volt1.split(' ')[1])) / self.pred) * 100
-            elif self.rez in ('ac', 'ac0'):
+                data_accur = ((data_adc - float(self.volt1.split(' ')[0])) / self.pred) * 100
+            elif self.rez in ('acv', 'ac0'):
                 data_adc = (math.sqrt(sum(i*i for i in self.x6[k][819:]) / len(self.x6[k][819:])))
-                data_accur = ((data_adc - float(self.volt1.split(' ')[1])) / float(self.volt1.split(' ')[1])) * 100
-            
+                data_accur = ((data_adc - float(self.volt1.split(' ')[0])) / float(self.volt1.split(' ')[0])) * 100
+
             data_adc = round(data_adc, 4)
             #print ('Chn', k, data_adc)
 
-            if self.rez in ('dc', 'ac'):
+            if self.rez in ('dcv', 'acv'):
                 xi2 = self.xi[0] + str(int(self.xi[1:]) + k)
                 yi2 = self.yi[0] + str(int(self.yi[1:]) + k)
             elif self.rez == 'ac0':
@@ -1030,7 +932,7 @@ class Call(Meas_adc):
 
             if self.accurancy == ' ':
                 xac = self.pred / math.sqrt(2)
-                x = float(self.volt1.split(' ')[1])
+                x = float(self.volt1.split(' ')[0])
                 accurancy = 0.15 + 0.02 * ((xac / x) - 1)
                 my_gui.change_rows(xi2, data_adc * 1000, yi2, data_accur, accurancy)
             else:
@@ -1038,52 +940,31 @@ class Call(Meas_adc):
 
     def run(self):
         sem.acquire()
-        global count
-        my_gui.statusbar["text"] = 'Статус: работа   Прогресс: {} из {}'.format(count, my_gui.progr)
+        global COUNT
+        my_gui.statusbar["text"] = f'Статус: работа   Прогресс: {COUNT} из {my_gui.cnt()[my_gui.bn]}'
         time.sleep(1)
-        my_gui.inst_fluke.write(self.volt1)
+        my_gui.inst_fluke.write(my_gui.calbr[self.rez]+self.volt1)
         my_gui.lb2.delete(0, 'end')
         if self.rez == 'acz':
             my_gui.lb2.insert('end', 'Заглушка')
-            my_gui.inst_fluke.write('STBY')
+            my_gui.inst_fluke.write(my_gui.calbr['OFF'])
         else:
-            my_gui.lb2.insert('end', '{}, напряжение {} Вольт'.format(self.rez, self.volt1.split(' ')[1]))
-            my_gui.inst_fluke.write('OPER')    #'OUTP ON'      'OPER'
+            my_gui.lb2.insert('end', f'Режим измерения: {self.rez.upper()}')
+            my_gui.lb2.insert('end', 'Установлено: ' + self.volt1)
+            my_gui.inst_fluke.write(my_gui.calbr['ON'])
         my_gui.lb2.see('end')
         time.sleep(4)
         self.xi = self.cell1
         self.yi = self.cell2
 
-        if my_gui.bn == 'E440':
+        if my_gui.bn in ('E440', 'E440D'):
             self.call_e14()
         elif my_gui.bn == 'E502':
             self.call_e502()
 
         my_gui.border_cell()
-        count += 1
+        COUNT += 1
         sem.release()
-
-def graphic_adc():
-    fig = figure(1)
-    ax1 = fig.add_subplot(211)
-    ax1.plot(y2[int(my_gui.combo_ch.get())], x2[int(my_gui.combo_ch.get())])
-    ax1.grid(True)
-    #ax1.set_xlim((0, 0.5))
-    ax1.set_ylabel('U, V')
-    l1=ax1.set_title('t, sec')
-    l1.set_color('g')
-    l1.set_fontsize('large')
-    show()
-
-def graphic_adc_csv():
-    data_plot = np.genfromtxt('{}\\csv\\lcard_phase.csv'.format(my_gui.folder_1), delimiter=',', names=['phase1', 'phase2', 'phase3', 'time_phase'])
-    plt.plot(data_plot['time_phase'], data_plot['phase1'], data_plot['time_phase'], data_plot['phase2'], data_plot['time_phase'], data_plot['phase3'])
-    plt.title('L-CARD graph from csv')
-    plt.ylabel('Voltage, mV')
-    plt.xlabel('time, sec')
-    #plt.xlim(0, 0.02)
-    #plt.ylim(0, 2.5)
-    plt.show()
 # ================================= DAC ==========================================
 class Meas_dac(Thread):
     def __init__(self, rez, volt_dac, freq=None):
@@ -1102,8 +983,8 @@ class Meas_dac(Thread):
             self.size = 1
         elif self.rez.split()[1] == 'AC':
             volt_dac = array.array('f', ())
-            self.size = 1000000         
-        
+            self.size = 1000000
+
             for x in range(self.size):
                 y_sin_analog = (self.volt_dac * (math.sin(x * 2 * math.pi * self.freq / self.size))) * math.sqrt(2) * (30000 / 5000)
                 volt_dac.append(y_sin_analog)
@@ -1113,8 +994,8 @@ class Meas_dac(Thread):
         my_gui.lib2.X502_SetOutFreq(my_gui.Create, ctypes.pointer(ctypes.c_double(self.size)))
         my_gui.lib2.X502_StreamsEnable(my_gui.Create, int(self.rez.split()[0]))
         my_gui.lib2.X502_PreloadStart(my_gui.Create)
-        for i in range(500):
-            my_gui.lib2.X502_PrepareData(my_gui.Create, self.pyarr, self.pyarr, 'NULL', self.size, 0x0002, self.volt_dac_ok)  
+        for _ in range(500):
+            my_gui.lib2.X502_PrepareData(my_gui.Create, self.pyarr, self.pyarr, 'NULL', self.size, 0x0002, self.volt_dac_ok)
             my_gui.lib2.X502_Send(my_gui.Create, self.volt_dac_ok, self.size, 10)
             my_gui.lib2.X502_Configure(my_gui.Create, 0)
             my_gui.lib2.X502_StreamsStart(my_gui.Create)
@@ -1130,16 +1011,16 @@ class Meas_dac(Thread):
         my_gui.wl.StartLDevice(my_gui.hIfc)
         my_gui.wl.EnableCorrection(my_gui.hIfc, 1)
 
-        for i in range(100):
+        for _ in range(100):
             x = (self.volt_dac * 2048) / 5000
-            pf.contents.Data[0] = int(round(x, 0))   
+            pf.contents.Data[0] = int(round(x, 0))
             my_gui.wl.IoAsync(my_gui.hIfc, pf)
-        
+
         my_gui.wl.StopLDevice(my_gui.hIfc)
 
     def select_dac(self):
-        if my_gui.bn == 'E440':
-            self.dac_set_param_e14() 
+        if my_gui.bn in ('E440', 'E440D'):
+            self.dac_set_param_e14()
         elif my_gui.bn == 'E502':
             self.dac_set_param_e502()
 
@@ -1160,17 +1041,17 @@ class Ldac(Meas_dac):
         self.accur = accur
         self.freq = freq
         self.start()
-        
+
     def run(self):
         sem.acquire()
-        global count
-        my_gui.statusbar["text"] = 'Статус: работа   Прогресс: {} из {}'.format(count, my_gui.progr)
+        global COUNT
+        my_gui.statusbar["text"] = f'Статус: работа   Прогресс: {COUNT} из {my_gui.cnt()[my_gui.bn]}'
         my_gui.lb2.delete(0, 'end')
-        my_gui.lb2.insert('end', 'ЦАП {}, напряжение {} мВ'.format(self.rez, self.volt_dac))
+        my_gui.lb2.insert('end', f'ЦАП {self.rez}, напряжение {self.volt_dac} мВ')
         my_gui.lb2.see('end')
         time.sleep(1)
 
-        if my_gui.bn == 'E440' or self.rez.split()[1] == 'DC':
+        if my_gui.bn in ('E440', 'E440D') or self.rez.split()[1] == 'DC':
             my_gui.inst_dmm.write('CONF:VOLT:DC 10')
             my_gui.inst_dmm.write('DET:BAND 20')
             time.sleep(1)
@@ -1194,8 +1075,8 @@ class Ldac(Meas_dac):
             my_gui.lib.E502_OpenUsb(my_gui.Create, 0)
 
             volt_dac = array.array('f', ())
-            self.size = 1000000         
-        
+            self.size = 1000000
+
             for x in range(self.size):
                 y_sin_analog = (self.volt_dac * (math.sin(x * 2 * math.pi * self.freq / self.size))) * math.sqrt(2) * (30000 / 5000)
                 volt_dac.append(y_sin_analog)
@@ -1204,9 +1085,9 @@ class Ldac(Meas_dac):
             self.volt_dac_ok = (ctypes.c_double * len(volt_dac))()
             my_gui.lib2.X502_SetOutFreq(my_gui.Create, ctypes.pointer(ctypes.c_double(self.size)))
             my_gui.lib2.X502_StreamsEnable(my_gui.Create, int(self.rez.split()[0]))
-            my_gui.lib2.X502_PreloadStart(my_gui.Create)      
+            my_gui.lib2.X502_PreloadStart(my_gui.Create)
             for i in range(500):
-                my_gui.lib2.X502_PrepareData(my_gui.Create, self.pyarr, self.pyarr, 'NULL', self.size, 0x0002, self.volt_dac_ok)  
+                my_gui.lib2.X502_PrepareData(my_gui.Create, self.pyarr, self.pyarr, 'NULL', self.size, 0x0002, self.volt_dac_ok)
                 my_gui.lib2.X502_Send(my_gui.Create, self.volt_dac_ok, self.size, 10)
                 my_gui.lib2.X502_Configure(my_gui.Create, 0)
                 my_gui.lib2.X502_StreamsStart(my_gui.Create)
@@ -1230,10 +1111,10 @@ class Ldac(Meas_dac):
                 data_accur = ((data_dac - self.freq) / self.freq) * 100
                 if self.freq in (100000, 300000):
                     data_dac = data_dac / 1000
-           
+
         my_gui.change_rows(self.cell1, data_dac, self.cell2, data_accur, self.accur)
         my_gui.border_cell()
-        count += 1
+        COUNT += 1
         sem.release()
 # ------------------------------ Structure e14 -------------------------------------
 class Slot(ctypes.Structure):
@@ -1287,15 +1168,15 @@ class Wadc_par_0(ctypes.Structure):
     _fields_ = [('s_Type', ctypes.c_ulong),
                 ('FIFO', ctypes.c_ulong),
                 ('IrqStep', ctypes.c_ulong),
-                ('Pages', ctypes.c_ulong),                
-                ('AutoInit', ctypes.c_ulong),                
+                ('Pages', ctypes.c_ulong),
+                ('AutoInit', ctypes.c_ulong),
                 ('dRate', ctypes.c_double),
                 ('dKadr', ctypes.c_double),
                 ('dScale', ctypes.c_double),
                 ('Rate', ctypes.c_ulong),
                 ('Kadr', ctypes.c_ulong),
                 ('Scale', ctypes.c_ulong),
-                ('FPDelay', ctypes.c_ulong),                
+                ('FPDelay', ctypes.c_ulong),
                 ('SynchroType', ctypes.c_ulong),
                 ('SynchroSensitivity', ctypes.c_ulong),
                 ('SynchroMode', ctypes.c_ulong),
@@ -1345,7 +1226,7 @@ class Message(Thread):
     def run(self):
         sem.acquire()
         messagebox.showinfo('ВНИМАНИЕ!', self.text)
-        my_gui.inst_fluke.write('STBY')        # OUTP OFF     STBY 
+        my_gui.inst_fluke.write(my_gui.calbr['OFF'])
         for row in my_gui.ws.rows:
             for cell in row:
                 if cell.value == '_type':
@@ -1353,15 +1234,15 @@ class Message(Thread):
                 if cell.value == '_numb':
                     cell.value = my_gui.sn
                 if cell.value == '_customer':
-                    cell.value = my_gui.custom.get()
+                    cell.value = my_gui.vardict_str['custom'].get()
                 if cell.value == '_temp':
-                    cell.value = my_gui.temp.get()
+                    cell.value = my_gui.vardict_str['temp'].get()
                 if cell.value == '_hum':
-                    cell.value = my_gui.humi.get()
+                    cell.value = my_gui.vardict_str['humi'].get()
                 if cell.value == '_pres':
-                    cell.value = my_gui.press.get()
+                    cell.value = my_gui.vardict_str['press'].get()
                 if cell.value == '_pov':
-                    cell.value = my_gui.pover.get()
+                    cell.value = my_gui.vardict_str['pover'].get()
                 if cell.value == '_date':
                     cell.value = my_gui.data_today[:10]
         sem.release()
@@ -1375,17 +1256,15 @@ class Reset(Thread):
         for merged_cells in my_gui.ws.merged_cells.ranges:
             style = my_gui.ws.cell(merged_cells.min_row, merged_cells.min_col)._style
             for col in range(merged_cells.min_col, merged_cells.max_col + 1):
-                for row in range(merged_cells.min_row, merged_cells.max_row + 1): 
+                for row in range(merged_cells.min_row, merged_cells.max_row + 1):
                     my_gui.ws.cell(row, col)._style = style
 
     def run(self):
         sem.acquire()
-        global count
-        count = 1
         time.sleep(1)
         my_gui.inst_fluke.write('*CLS')
-        my_gui.inst_fluke.write('*RST')      
-        if my_gui.bn == 'E440':
+        my_gui.inst_fluke.write('*RST')
+        if my_gui.bn in ('E440', 'E440D'):
             if my_gui.dac == 1:
                 my_gui.inst_dmm.write('*RST')
         elif my_gui.bn == 'E502':
