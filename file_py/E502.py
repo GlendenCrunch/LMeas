@@ -182,9 +182,9 @@ if self.vardict_boo['cvar3'].get() == 1:
 if self.vardict_boo['cvar4'].get() == 1:
     # ac 10B -----------------------------------------------------------------
     Callpar(0, 0)
-    Call('acv', 10, 'CONF:VOLT:AC 0.1 V, 0.01 kHz', 'd106', 'e106', ' ')
-    Call('acv', 10, 'CONF:VOLT:AC 0.1 V, 1.0 kHz', 'd122', 'e122', ' ')
-    Call('acv', 10, 'CONF:VOLT:AC 0.1 V, 50.0 kHz', 'd138', 'e138', ' ')
+    Call('acv', 10, '0.1 V, 0.01 kHz', 'd106', 'e106', ' ')
+    Call('acv', 10, '0.1 V, 1.0 kHz', 'd122', 'e122', ' ')
+    Call('acv', 10, '0.1 V, 50.0 kHz', 'd138', 'e138', ' ')
     Call('acv', 10, '0.1 V, 0.01 kHz', 'd106', 'e106', ' ')
     Call('acv', 10, '0.1 V, 1.0 kHz', 'd122', 'e122', ' ')
     Call('acv', 10, '0.1 V, 50.0 kHz', 'd138', 'e138', ' ')

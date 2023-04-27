@@ -9,7 +9,8 @@
         "dcv": "OUT ",
         "fr": "OUT ",
         "res": "OUT ",
-        "res4": "; ZCOMP WIRE4"
+        "res4": "; ZCOMP WIRE4",
+        "acz": "OUT "
     },
     "N4-56": {
         "OFF": "OUTP:STAT OFF",
@@ -21,7 +22,8 @@
         "dcv": "CONF:VOLT ",
         "fr": "CONF:VOLT:AC ",
         "res": "CONF:RES ",
-        "res4": ""
+        "res4": "",
+        "acz": "OUT "
     },
     "language": "Russia",
     "sign_pribor": {
