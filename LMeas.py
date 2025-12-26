@@ -49,7 +49,7 @@ class LMeasGUI():
         self.vardict_str = {self.var: tk.StringVar() for self.var in self.varlist_str}
 
         self.varlist_boo = ['cvar1','cvar2','cvar3','cvar4','cvar5','cvar6','kvar1','kvar2','kvar3','kvar4','kvar5','kvar6',
-        'kvar7','kvar8','kvar9','kvar10','kvar11','kvar12','kvar13','kvar14','kvar15','kvar16','kvar17','kvar18','kvar19']
+        'kvar7','kvar8','kvar9','kvar10','kvar11','kvar12','kvar13','kvar14','kvar15','kvar16','kvar17','kvar18','kvar19', 'MP2017']
         self.vardict_boo = {self.var: tk.BooleanVar() for self.var in self.varlist_boo}
         for self.var in self.varlist_boo[:22]:
             self.vardict_boo[self.var].set(1)
@@ -262,6 +262,7 @@ class LMeasGUI():
             self.vardict_boo['kvar5'],self.vardict_boo['kvar6'],self.vardict_boo['kvar7'],self.vardict_boo['kvar8'],self.vardict_boo['kvar9'],
             self.vardict_boo['kvar10'],self.vardict_boo['kvar11'],self.vardict_boo['kvar12'],self.vardict_boo['kvar13'],self.vardict_boo['kvar14'],self.vardict_boo['kvar15'],self.vardict_boo['kvar16']])
 
+        self.chkbtn_1 = tk.Checkbutton(self.lbf1, bg="#848a98", activebackground="#848a98", text="МП 2017", variable=self.vardict_boo['MP2017'], onvalue=1, offvalue=0, font=self.ar10b)
         tk.Checkbutton(self.lbf6, text="ЦАП 1:", variable=self.vardict_boo['kvar17'], onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=5)
         tk.Checkbutton(self.lbf6, text="ЦАП 2:", variable=self.vardict_boo['kvar18'], onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=5,y=45)
         tk.Checkbutton(self.lbf5, text="Запись в CSV", variable=self.vardict_boo['kvar19'], onvalue=1, offvalue=0, bg=self.bg_colour, activebackground=self.bg_colour).place(x=230,y=10)
@@ -369,8 +370,8 @@ class LMeasGUI():
         _button.place(x=120,y=250)
 
     def cnt(self):
-        e440_1 = sum(1 for line in open(f'{self.folder_1}\\file_py\\e440.py', encoding='utf-8') if line.lstrip().startswith('Call('))
-        e440_2 = sum(1 for line in open(f'{self.folder_1}\\file_py\\e440.py', encoding='utf-8') if line.lstrip().startswith('Ldac('))
+        e440_1 = sum(1 for line in open(f'{self.folder_1}\\file_py\\e440d.py', encoding='utf-8') if line.lstrip().startswith('Call('))
+        e440_2 = sum(1 for line in open(f'{self.folder_1}\\file_py\\e440d.py', encoding='utf-8') if line.lstrip().startswith('Ldac('))
         e440_3 = e440_1 + e440_2
         e140_1 = sum(1 for line in open(f'{self.folder_1}\\file_py\\e140.py', encoding='utf-8') if line.lstrip().startswith('Call('))
         e140_2 = sum(1 for line in open(f'{self.folder_1}\\file_py\\e140.py', encoding='utf-8') if line.lstrip().startswith('Ldac('))
@@ -414,6 +415,7 @@ class LMeasGUI():
         self.combo_flu.configure(values=decay_list)
         #self.combo_flu.current(0)
         self.tree.delete(*self.tree.get_children())
+        self.chkbtn_1.place(x=0,y=240)
 
     def connect_lcard(self):
         if self.combo_lcard.get() == 'E14':
@@ -464,6 +466,7 @@ class LMeasGUI():
             self.set_dac.configure(state='disabled')
         self.connect_lcard_set(self.bn, self.sn)
         self.draw_on.configure(state='normal')
+        self.chkbtn_1.place(x=10,y=40)
 
     def close_lc(self):
         try:
@@ -573,11 +576,13 @@ class LMeasGUI():
         self.progress1.step(1)
 
     def start(self):
+        if self.vardict_boo['gost'].get() == 1:
+            self.bn = 'E440_2017'
         self.progress1.configure(maximum = self.cnt()[self.bn])
         self.lb.insert('end', f'Время начала: {self.data_today[11:]}')
-        self.wb = load_workbook(f'{self.folder_1}\\shablon\\{self.bn[:4]}.xlsx')
+        self.wb = load_workbook(f'{self.folder_1}\\shablon\\{self.bn}.xlsx')
         self.ws = self.wb.active
-        with open(f'{self.folder_1}\\file_py\\{self.bn[:4]}.py', encoding='utf-8') as lc_file:
+        with open(f'{self.folder_1}\\file_py\\{self.bn}.py', encoding='utf-8') as lc_file:
             exec(lc_file.read())
 
     def graphic_adc(self):
@@ -603,7 +608,7 @@ class LMeasGUI():
         plt.show()
 
     def measure_adc(self):
-        if self.bn in ('E440', 'E440D'):
+        if self.bn in ('E440', 'E440D', 'E440_2017'):
             Callpar(float(self.combo_frq.get()), self.rg5.get(self.combo_amp.get()))
             Meas_adc(float(self.combo_amp.get()), int(self.ent_loop.get()))
         elif self.bn == 'E502':
@@ -687,7 +692,7 @@ class Callpar(Thread):
 
     def run(self):
         sem.acquire()
-        if my_gui.bn in ('E440', 'E440D'):
+        if my_gui.bn in ('E440', 'E440D', 'E440_2017'):
             self.callpar_e14()
         elif my_gui.bn == 'E502':
             self.callpar_e502()
@@ -807,7 +812,7 @@ class Meas_adc(Thread):
         my_gui.meas_on.configure(state='disabled')
         my_gui.canvas_1.itemconfig(my_gui.oval_1, fill="green")
 
-        if my_gui.bn in ('E440', 'E440D'):
+        if my_gui.bn in ('E440', 'E440D', 'E440_2017'):
             self.start_meas_e14()
         elif my_gui.bn == 'E502':
             self.start_meas_e502(8192*(number_ch + 1)*(16 - number_ch), 1)
@@ -957,7 +962,7 @@ class Call(Meas_adc):
         self.xi = self.cell1
         self.yi = self.cell2
 
-        if my_gui.bn in ('E440', 'E440D'):
+        if my_gui.bn in ('E440', 'E440D', 'E440_2017'):
             self.call_e14()
         elif my_gui.bn == 'E502':
             self.call_e502()
@@ -1019,7 +1024,7 @@ class Meas_dac(Thread):
         my_gui.wl.StopLDevice(my_gui.hIfc)
 
     def select_dac(self):
-        if my_gui.bn in ('E440', 'E440D'):
+        if my_gui.bn in ('E440', 'E440D', 'E440_2017'):
             self.dac_set_param_e14()
         elif my_gui.bn == 'E502':
             self.dac_set_param_e502()
@@ -1051,7 +1056,7 @@ class Ldac(Meas_dac):
         my_gui.lb2.see('end')
         time.sleep(1)
 
-        if my_gui.bn in ('E440', 'E440D') or self.rez.split()[1] == 'DC':
+        if my_gui.bn in ('E440', 'E440D', 'E440_2017') or self.rez.split()[1] == 'DC':
             my_gui.inst_dmm.write('CONF:VOLT:DC 10')
             my_gui.inst_dmm.write('DET:BAND 20')
             time.sleep(1)
@@ -1264,7 +1269,7 @@ class Reset(Thread):
         time.sleep(1)
         my_gui.inst_fluke.write('*CLS')
         my_gui.inst_fluke.write('*RST')
-        if my_gui.bn in ('E440', 'E440D'):
+        if my_gui.bn in ('E440', 'E440D', 'E440_2017'):
             if my_gui.dac == 1:
                 my_gui.inst_dmm.write('*RST')
         elif my_gui.bn == 'E502':
